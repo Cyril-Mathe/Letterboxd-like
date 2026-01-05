@@ -7,12 +7,43 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS directors (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  birth_date DATE,
+  death_date DATE,
+  place_of_birth TEXT,
+  nationnality TEXT,
+  img_url VARCHAR(255)
+);
+
+CREATE TABLE IF NOT EXISTS categories (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS actors (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  birth_date DATE,
+  death_date DATE,
+  place_of_birth TEXT,
+  nationnality TEXT,
+  img_url VARCHAR(255)
+);
+
 CREATE TABLE IF NOT EXISTS movies (
   id SERIAL PRIMARY KEY,
   title TEXT NOT NULL,
   year SMALLINT,
-  director TEXT,
-  created_at TIMESTAMPTZ DEFAULT now()
+  director TEXT NOT NULL,
+  categorie VARCHAR(100) NOT NULL,
+  actors TEXT NOT NULL,
+  synopsis TEXT,
+  poster_url VARCHAR(255),
+  FOREIGN KEY (director) REFERENCES directors(name) ON DELETE CASCADE,
+  FOREIGN KEY (categorie) REFERENCES categories(name) ON DELETE CASCADE,
+  FOREIGN KEY (actors) REFERENCES actors(name) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS reviews (
