@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import routes from "./routes/routes.js";
 import { connectDB } from "./database/dbConnect.js";
+import initDb from './database/init-db.js';
 
 const app = express();
 const port = 3000;
@@ -10,6 +11,8 @@ async function start() {
   try {
     const info = await connectDB();
     console.log('Connected to DB:', info.db);
+    // Apply schema on startup (safe because schema uses CREATE TABLE IF NOT EXISTS)
+    await initDb();
   } catch (err) {
     console.error('DB connection failed:', err.message);
     process.exit(1);
