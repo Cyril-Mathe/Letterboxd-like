@@ -4,6 +4,7 @@ import { getActors, getActorsById, createActors, modifyActors, deleteActors } fr
 import { getDirectors, getDirectorsById, createDirectors, modifyDirectors, deleteDirectors } from "../controllers/Directors/directorsControllers.js";
 import { getCategories, getCategoriesById, createCategories, modifyCategories, deleteCategories } from "../controllers/Categories/categoriesControllers.js";
 import { getMovies, getMoviesById, createMovies, modifyMovies, deleteMovies } from "../controllers/Movies/moviesControllers.js";
+import { getReviews, getReviewsById, createReviews, modifyReviews, deleteReviews } from "../controllers/Reviews/reviewsControllers.js";
 
 const router = express.Router()
 
@@ -34,5 +35,12 @@ router.get('/movies/:id', getMoviesById);
 router.post('/movies', createMovies);
 router.put('/movies/:id', modifyMovies);
 router.delete('/movies/:id', deleteMovies);
+
+// reviews routes
+router.get('/reviews', getReviews);
+router.get('/reviews/:id', getReviewsById);
+router.post('/reviews', createReviews);
+router.put('/reviews/:id', modifyReviews);
+router.delete('/reviews/:id', deleteReviews);
 
 export default router;
