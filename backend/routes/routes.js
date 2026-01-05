@@ -2,6 +2,7 @@
 import express from "express";
 import { getActors, getActorsById, createActors, modifyActors, deleteActors } from "../controllers/Actors/actorsControllers.js";
 import { getDirectors, getDirectorsById, createDirectors, modifyDirectors, deleteDirectors } from "../controllers/Directors/directorsControllers.js";
+import { getCategories, getCategoriesById, createCategories, modifyCategories, deleteCategories } from "../controllers/Categories/categoriesControllers.js";
 
 const router = express.Router()
 
@@ -18,5 +19,12 @@ router.get('/directors/:id', getDirectorsById);
 router.post('/directors', createDirectors);
 router.put('/directors/:id', modifyDirectors);
 router.delete('/directors/:id', deleteDirectors);
+
+// categories routes
+router.get('/categories', getCategories);
+router.get('/categories/:id', getCategoriesById);
+router.post('/categories', createCategories);
+router.put('/categories/:id', modifyCategories);
+router.delete('/categories/:id', deleteCategories);
 
 export default router;
