@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon index.js",
-    "test-db": "node tests/test-db.js"
+    "test-db": "node tests/test-db.js",
+    "init-db": "node database/init-db.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

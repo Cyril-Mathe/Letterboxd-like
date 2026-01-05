@@ -36,14 +36,10 @@ CREATE TABLE IF NOT EXISTS movies (
   id SERIAL PRIMARY KEY,
   title TEXT NOT NULL,
   year SMALLINT,
-  director TEXT NOT NULL,
-  categorie VARCHAR(100) NOT NULL,
-  actors TEXT NOT NULL,
+  director_id INTEGER NOT NULL REFERENCES directors(id) ON DELETE SET NULL,
+  categorie_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE SET NULL,
   synopsis TEXT,
-  poster_url VARCHAR(255),
-  FOREIGN KEY (director) REFERENCES directors(name) ON DELETE CASCADE,
-  FOREIGN KEY (categorie) REFERENCES categories(name) ON DELETE CASCADE,
-  FOREIGN KEY (actors) REFERENCES actors(name) ON DELETE CASCADE
+  poster_url VARCHAR(255)
 );
 
 CREATE TABLE IF NOT EXISTS reviews (
