@@ -37,7 +37,8 @@ CREATE TABLE IF NOT EXISTS movies (
   title TEXT NOT NULL,
   year SMALLINT,
   director_id INTEGER NOT NULL REFERENCES directors(id) ON DELETE SET NULL,
-  categorie_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE SET NULL,
+  actor_id INTEGER NOT NULL REFERENCES actors(id) ON DELETE SET NULL,
+  category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE SET NULL,
   synopsis TEXT,
   poster_url VARCHAR(255)
 );
