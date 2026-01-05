@@ -3,6 +3,7 @@ import express from "express";
 import { getActors, getActorsById, createActors, modifyActors, deleteActors } from "../controllers/Actors/actorsControllers.js";
 import { getDirectors, getDirectorsById, createDirectors, modifyDirectors, deleteDirectors } from "../controllers/Directors/directorsControllers.js";
 import { getCategories, getCategoriesById, createCategories, modifyCategories, deleteCategories } from "../controllers/Categories/categoriesControllers.js";
+import { getMovies, getMoviesById, createMovies, modifyMovies, deleteMovies } from "../controllers/Movies/moviesControllers.js";
 
 const router = express.Router()
 
@@ -26,5 +27,12 @@ router.get('/categories/:id', getCategoriesById);
 router.post('/categories', createCategories);
 router.put('/categories/:id', modifyCategories);
 router.delete('/categories/:id', deleteCategories);
+
+// movies routes
+router.get('/movies', getMovies);
+router.get('/movies/:id', getMoviesById);
+router.post('/movies', createMovies);
+router.put('/movies/:id', modifyMovies);
+router.delete('/movies/:id', deleteMovies);
 
 export default router;
