@@ -1,14 +1,10 @@
-import { QueryClientProvider } from '@tanstack/react-query'
-import { RouterProvider, createRouter } from '@tanstack/react-router'
-import { routeTree } from './routeTree.gen'
-import { queryClient } from './queryClient'
-
-const router = createRouter({ routeTree })
+import React from 'react';
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>
-  )
+    <div>
+      <h1>App Component</h1>
+      <p>This component is not currently used in the application.</p>
+    </div>
+  );
 }

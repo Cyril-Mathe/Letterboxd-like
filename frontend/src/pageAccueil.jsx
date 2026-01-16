@@ -1,11 +1,11 @@
 import { useContext } from 'react'
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { ThemeContext, AuthContext } from './contexts'
 import { Search, Star, Film, TrendingUp, Users, Calendar } from 'lucide-react'
 
 const HomePage = () => {
   const { isDark } = useContext(ThemeContext)
-  const { user } = useContext(AuthContext)
+  const { user, logout } = useContext(AuthContext)
 
   // Données simulées pour la démonstration
   const featuredMovies = [
@@ -57,8 +57,8 @@ const HomePage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
-              <Film className="h-8 w-8 text-red-500" />
-              <h1 className="text-2xl font-bold">CineGraduit</h1>
+              <Film className="h-8 w-8 text-green-500" />
+              <h1 className="text-2xl font-bold">CinéConnect</h1>
             </div>
 
             <div className="flex-1 max-w-lg mx-8">
@@ -71,7 +71,7 @@ const HomePage = () => {
                     isDark
                       ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                       : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                  } focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent`}
+                  } focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent`}
                 />
               </div>
             </div>
@@ -80,7 +80,7 @@ const HomePage = () => {
               {user ? (
                 <div className="flex items-center space-x-2">
                   <span className="text-sm">Bonjour, {user.username}</span>
-                  <button className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+                  <button onClick={logout} className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
                     Déconnexion
                   </button>
                 </div>
@@ -89,7 +89,7 @@ const HomePage = () => {
                   <Link to="/login" className="px-4 py-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">
                     Connexion
                   </Link>
-                  <Link to="/register" className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+                  <Link to="/register" className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
                     S'inscrire
                   </Link>
                 </div>
@@ -123,7 +123,7 @@ const HomePage = () => {
                       <span className="ml-1 text-sm font-medium">{movie.rating}</span>
                     </div>
                   </div>
-                  <button className="w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
+                  <button className="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors">
                     Voir les détails
                   </button>
                 </div>
@@ -138,10 +138,10 @@ const HomePage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8">
             <h3 className="text-2xl font-bold flex items-center">
-              <TrendingUp className="h-6 w-6 mr-2 text-red-500" />
+              <TrendingUp className="h-6 w-6 mr-2 text-green-500" />
               Films Populaires
             </h3>
-            <Link to="/films" className="text-red-500 hover:text-red-600 font-medium">
+            <Link to="/films" className="text-green-500 hover:text-green-600 font-medium">
               Voir tout →
             </Link>
           </div>
@@ -168,10 +168,10 @@ const HomePage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8">
             <h3 className="text-2xl font-bold flex items-center">
-              <Calendar className="h-6 w-6 mr-2 text-red-500" />
+              <Calendar className="h-6 w-6 mr-2 text-green-500" />
               Activité Récente
             </h3>
-            <Link to="/activity" className="text-red-500 hover:text-red-600 font-medium">
+            <Link to="/activity" className="text-green-500 hover:text-green-600 font-medium">
               Voir tout →
             </Link>
           </div>
@@ -187,7 +187,7 @@ const HomePage = () => {
                     <div className="flex items-center space-x-2 mb-2">
                       <span className="font-medium">{review.user}</span>
                       <span className="text-sm text-gray-500">a noté</span>
-                      <span className="font-medium text-red-500">{review.movie}</span>
+                      <span className="font-medium text-green-500">{review.movie}</span>
                       <div className="flex items-center">
                         {[...Array(5)].map((_, i) => (
                           <Star
