@@ -5,8 +5,19 @@ import { getDirectors, getDirectorsById, createDirectors, modifyDirectors, delet
 import { getCategories, getCategoriesById, createCategories, modifyCategories, deleteCategories } from "../controllers/Categories/categoriesControllers.js";
 import { getMovies, getMoviesById, createMovies, modifyMovies, deleteMovies } from "../controllers/Movies/moviesControllers.js";
 import { getReviews, getReviewsById, createReviews, modifyReviews, deleteReviews } from "../controllers/Reviews/reviewsControllers.js";
+import { register, login, verify2FA, resetpassword, resend2FACodeHandler } from "../controllers/User/authControllers.js";
+import { authenticate } from "../controllers/User/auth.js";
 
 const router = express.Router()
+
+// ROUTES AUTHENTIFICATION
+
+router.post('/register', upload.single('charteFile'), register);
+router.post('/login', login)
+router.post('/verify2FA', verify2FA);
+router.post("/resend2FA", resend2FACodeHandler);
+router.post('/reset-password', resetpassword);
+router.get('/profile', authenticate);
 
 // actors routes
 router.get('/actors', getActors);
