@@ -16,7 +16,7 @@ export async function register(req, res) {
     const { username, email, password } = req.body;
     try {
         // Vérification de l'email
-        const user = await pool.promise().query(
+        const user = await pool.query(
             `SELECT * FROM users WHERE email = $1`, [email]
         );
         if (user[0].length > 0) {
@@ -38,7 +38,7 @@ export async function register(req, res) {
 
         // Ajout dans la table
         {
-            await pool.promise().query(
+            await pool.query(
                 `INSERT INTO users (username, email, password, deuxfa_secret, deuxfa_enabled)
                  VALUES ($1, $2, $3, $4, $5)`,
                 [username, email, hashedPassword, deuxfa_secret, deuxfa_enabled]
@@ -68,7 +68,7 @@ export async function login(req, res) {
     const { email, password } = req.body;
     try {
         
-        const user = await pool.promise().query(
+        const user = await pool.query(
             `SELECT * FROM users WHERE email = $1`, [email]
         );
 
@@ -171,7 +171,7 @@ export async function verify2FA(req, res) {
 
     try {
         // Sélectionne dans la table
-        const [rows] = await pool.promise().query("SELECT * FROM users WHERE id = $1", [userId]);
+        const [rows] = await pool.query("SELECT * FROM users WHERE id = $1", [userId]);
         const user = rows[0];
 
         if (!user || !user.deuxfa_secret) {
@@ -210,7 +210,7 @@ export async function resend2FACodeHandler(req, res) {
     }
 
     try {
-        const [rows] = await pool.promise().query("SELECT * FROM users WHERE id = $1 AND email = $2", [userId, email]);
+        const [rows] = await pool.query("SELECT * FROM users WHERE id = $1 AND email = $2", [userId, email]);
         const user = rows[0];
 
         if (!user || !user.deuxfa_secret) {
@@ -294,7 +294,7 @@ export async function resetpassword(req, res) {
     return res.status(400).json({ message: "Email requis" });
     }
 
-    const [rows] = await pool.promise().query("SELECT * FROM ambassadors WHERE email = $1", [email]);
+    const [rows] = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
     const user = rows[0];
 
     if (!user) {

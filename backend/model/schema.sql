@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS actors (
   birth_date DATE,
   death_date DATE,
   place_of_birth TEXT,
-  nationnality TEXT,
+  nationality TEXT,
   img_url VARCHAR(255)
 );
 
@@ -36,9 +36,9 @@ CREATE TABLE IF NOT EXISTS movies (
   id SERIAL PRIMARY KEY,
   title TEXT NOT NULL,
   year SMALLINT,
-  director_id INTEGER NOT NULL REFERENCES directors(id) ON DELETE SET NULL,
-  actor_id INTEGER NOT NULL REFERENCES actors(id) ON DELETE SET NULL,
-  category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE SET NULL,
+  director_id INTEGER NOT NULL REFERENCES directors(id) ON DELETE CASCADE,
+  actor_id INTEGER NOT NULL REFERENCES actors(id) ON DELETE CASCADE,
+  category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
   synopsis TEXT,
   poster_url VARCHAR(255)
 );

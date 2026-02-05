@@ -7,12 +7,13 @@ import { getMovies, getMoviesById, createMovies, modifyMovies, deleteMovies } fr
 import { getReviews, getReviewsById, createReviews, modifyReviews, deleteReviews } from "../controllers/Reviews/reviewsControllers.js";
 import { register, login, verify2FA, resetpassword, resend2FACodeHandler } from "../controllers/User/authControllers.js";
 import { authenticate } from "../controllers/User/auth.js";
+import { getAllUsers, getUsersById, createUsers, modifyUsers, deleteUsers, modifyUsersPassword } from "../controllers/User/userControllers.js";
 
 const router = express.Router()
 
 // ROUTES AUTHENTIFICATION
 
-router.post('/register', upload.single('charteFile'), register);
+router.post('/register', register);
 router.post('/login', login)
 router.post('/verify2FA', verify2FA);
 router.post("/resend2FA", resend2FACodeHandler);
@@ -53,5 +54,13 @@ router.get('/reviews/:id', getReviewsById);
 router.post('/reviews', createReviews);
 router.put('/reviews/:id', modifyReviews);
 router.delete('/reviews/:id', deleteReviews);
+
+// users routes
+router.get('/users', getAllUsers);
+router.get('/users/:id', getUsersById);
+router.post('/users', createUsers);
+router.put('/users/:id', modifyUsers);
+router.delete('/users/:id', deleteUsers);
+router.put('/users/reset-password/:id', modifyUsersPassword);
 
 export default router;
