@@ -1,15 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useContext, useState } from 'react'
 import { Link } from '@tanstack/react-router'
-import { ThemeContext, AuthContext } from '../contexts'
+import { ThemeContext, AuthContext } from '../../contexts'
 import { Star, Heart, Eye, MessageCircle, ArrowLeft, Calendar, Clock, Film } from 'lucide-react'
+import MovieDetail from '../../movieDetail'
 
-export const Route = createFileRoute('/film/$id')({
+export const Route = createFileRoute('/movies/$movieId')({
   component: FilmDetail,
 })
 
 function FilmDetail() {
-  const { id } = Route.useParams()
+  const { movieId } = Route.useParams()
   const { isDark } = useContext(ThemeContext)
   const { user } = useContext(AuthContext)
   const [isFavorite, setIsFavorite] = useState(false)
@@ -19,7 +20,7 @@ function FilmDetail() {
 
   // Données simulées du film (normalement récupérées depuis une API)
   const movie = {
-    id: parseInt(id),
+    id: movieId,
     title: "Dune: Part Two",
     poster: "https://via.placeholder.com/600x900/1a1a1a/ffffff?text=Dune+2",
     backdrop: "https://via.placeholder.com/1200x600/2a2a2a/ffffff?text=Dune+Backdrop",
@@ -131,6 +132,8 @@ function FilmDetail() {
           </div>
         </div>
       </div>
+
+      <MovieDetail />
 
       {/* Contenu principal */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

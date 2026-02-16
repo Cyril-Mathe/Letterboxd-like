@@ -2,6 +2,7 @@ import { useContext } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { ThemeContext, AuthContext } from './contexts'
 import { Search, Star, Film, TrendingUp, Users, Calendar } from 'lucide-react'
+import Searchbar from './searchbar'
 
 const HomePage = () => {
   const { isDark } = useContext(ThemeContext)
@@ -60,6 +61,8 @@ const HomePage = () => {
               <Film className="h-8 w-8 text-green-500" />
               <h1 className="text-2xl font-bold">CinéConnect</h1>
             </div>
+
+            <Searchbar />
 
             <div className="flex-1 max-w-lg mx-8">
               <div className="relative">
