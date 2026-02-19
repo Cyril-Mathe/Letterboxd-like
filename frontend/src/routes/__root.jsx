@@ -2,7 +2,7 @@ import { createRootRoute, Link, Outlet, redirect } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { useState } from 'react'
 import { ThemeContext, AuthContext } from '../contexts'
-import { Film, User, MessageCircle, Home, LogOut, Sun, Moon } from 'lucide-react'
+import { Film, User, MessageCircle, Home, LogOut, Sun, Moon, Sparkle } from 'lucide-react'
 
 const RootLayout = () => {
   const [isDark, setIsDark] = useState(() => {
@@ -70,6 +70,7 @@ const RootLayout = () => {
   const navigation = [
     { name: 'Accueil', href: '/', icon: Home },
     { name: 'Films', href: '/films', icon: Film },
+    { name: 'Recommendations', href: '/recommendations', icon: Sparkle },
     { name: 'Profil', href: '/profile', icon: User, requiresAuth: true },
     { name: 'Discussion', href: '/discussion', icon: MessageCircle, requiresAuth: true },
   ]
