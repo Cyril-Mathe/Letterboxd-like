@@ -40,17 +40,38 @@ export default function RecommendationsPage() {
 
     return (
         <>
-        <div className="mb-4">
-          <button onClick={() => setSelectedCategory("guerre")}>Guerre</button>
-          <button onClick={() => setSelectedCategory("crime")}>Crime</button>
-          <button onClick={() => setSelectedCategory("action")}>Action</button>
-          <button onClick={() => setSelectedCategory("western")}>Western</button>
-          <button onClick={() => setSelectedCategory("horreur")}>Horreur</button>
-          <button onClick={() => setSelectedCategory("science-fiction")}>Science-fiction</button>
-          <button onClick={() => setSelectedCategory("animation")}>Animation</button>
-          <button onClick={() => setSelectedCategory("thriller")}>Thriller</button>
-          <button onClick={() => setSelectedCategory("comédie")}>Comédie</button>
-          <button onClick={() => setSelectedCategory("drame")}>Drame</button>
+        <style>{`
+          @keyframes buttonPulse {
+            0% {
+              transform: scale(1);
+            }
+            50% {
+              transform: scale(1.05);
+            }
+            100% {
+              transform: scale(1);
+            }
+          }
+
+          .btn-active {
+            animation: buttonPulse 0.4s ease;
+          }
+        `}</style>
+
+        <div className="mx-[150px] flex flex-wrap gap-2 mt-4">
+          {Object.keys(movieTitles).map((category) => (
+            <button
+              key={category}
+              onClick={() => setSelectedCategory(category)}
+              className={`flex-1 basis-1/5 px-2 py-1 text-sm border-2 rounded-lg transition-all duration-300 font-semibold ${
+                selectedCategory === category
+                  ? 'bg-black text-white border-black btn-active'
+                  : 'border-gray-300 bg-white hover:bg-gray-100 hover:border-gray-600'
+              }`}
+            >
+              {category === 'science-fiction' ? 'SF' : category.charAt(0).toUpperCase() + category.slice(1)}
+            </button>
+          ))}
         </div>
 
         <div>
