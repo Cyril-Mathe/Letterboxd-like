@@ -111,8 +111,41 @@ export default function RecommendationsPage() {
         const data6sf = await sf6.json()
         const data7sf = await sf7.json()
         const data8sf = await sf8.json()
+        // fetch de films d'animations
+        const animation1 = await fetch(`https://www.omdbapi.com/?t=Fantastic%20Mr.%20Fox&apikey=${apiKey}`)
+        const animation2 = await fetch(`https://www.omdbapi.com/?t=perfect%20blue&apikey=${apiKey}`)
+        const animation3 = await fetch(`https://www.omdbapi.com/?t=the%20boy%20and%20the%20heron&apikey=${apiKey}`)
+        const animation4 = await fetch(`https://www.omdbapi.com/?t=princess%20mononoke&apikey=${apiKey}`)
+        const animation5 = await fetch(`https://www.omdbapi.com/?t=spirited%20away&apikey=${apiKey}`)
+        const animation6 = await fetch(`https://www.omdbapi.com/?t=spider%20man%20into%20the%20spider%20verse&apikey=${apiKey}`)
+        const animation7 = await fetch(`https://www.omdbapi.com/?t=spider%20man%20across%20the%20spider%20verse&apikey=${apiKey}`)
+        const animation8 = await fetch(`https://www.omdbapi.com/?t=the%20nightmare%20before%20christmas&apikey=${apiKey}`)
+        const data1an = await animation1.json()
+        const data2an = await animation2.json()
+        const data3an = await animation3.json()
+        const data4an = await animation4.json()
+        const data5an = await animation5.json()
+        const data6an = await animation6.json()
+        const data7an = await animation7.json()
+        const data8an = await animation8.json()
+        const thriller1 = await fetch(`https://www.omdbapi.com/?t=oldboy&apikey=${apiKey}`)
+        const thriller2 = await fetch(`https://www.omdbapi.com/?t=memories%20of%20murder&apikey=${apiKey}`)
+        const thriller3 = await fetch(`https://www.omdbapi.com/?t=eyes%20wide%20shut&apikey=${apiKey}`)
+        const thriller4 = await fetch(`https://www.omdbapi.com/?t=se7en&apikey=${apiKey}`)
+        const thriller5 = await fetch(`https://www.omdbapi.com/?t=the%20handmaiden&apikey=${apiKey}`)
+        const thriller6 = await fetch(`https://www.omdbapi.com/?t=the%20silence%20of%20the%20lambs&apikey=${apiKey}`)
+        const thriller7 = await fetch(`https://www.omdbapi.com/?t=rear%20window&apikey=${apiKey}`)
+        const thriller8 = await fetch(`https://www.omdbapi.com/?t=gone%20girl&apikey=${apiKey}`)
+        const data1t = await thriller1.json()
+        const data2t = await thriller2.json()
+        const data3t = await thriller3.json()
+        const data4t = await thriller4.json()
+        const data5t = await thriller5.json()
+        const data6t = await thriller6.json()
+        const data7t = await thriller7.json()
+        const data8t = await thriller8.json()
         return {
-          data1, data2, data3, data4, data5, data6, data7, data8, data1c, data2c, data3c, data4c, data5c, data6c, data7c, data8c, data1a, data2a, data3a, data4a, data5a, data6a, data7a, data8a, data1w, data2w, data3w, data4w, data5w, data6w, data7w, data8w, data1h, data2h, data3h, data4h, data5h, data6h, data7h, data8h, data1sf, data2sf, data3sf, data4sf, data5sf ,data6sf, data7sf, data8sf
+          data1, data2, data3, data4, data5, data6, data7, data8, data1c, data2c, data3c, data4c, data5c, data6c, data7c, data8c, data1a, data2a, data3a, data4a, data5a, data6a, data7a, data8a, data1w, data2w, data3w, data4w, data5w, data6w, data7w, data8w, data1h, data2h, data3h, data4h, data5h, data6h, data7h, data8h, data1sf, data2sf, data3sf, data4sf, data5sf ,data6sf, data7sf, data8sf, data1an, data2an, data3an, data4an, data5an, data6an, data7an, data8an, data1t, data2t, data3t, data4t, data5t, data6t, data7t, data8t
         }
       },
       staleTime: 1000 * 30,
@@ -270,6 +303,7 @@ export default function RecommendationsPage() {
 
           {categories === "science-fiction" && (
             <div className='h-screen flex justify-center'>
+              <h3>Non il n'y a pas Interstellar</h3>
               <div className='w-[700px] flex flex-wrap'>
                 {data && ([data.data1sf, data.data2sf, data.data3sf, data.data4sf, data.data5sf, data.data6sf, data.data7sf, data.data8sf].filter(Boolean)).map((movie) => (
                   <div className='w-[175px]' key={movie.imdbID}>
@@ -294,8 +328,58 @@ export default function RecommendationsPage() {
             </div>
           )}
 
-          {categories === "animation" && <div>DD</div>}
-          {categories === "thriller" && <div>AA</div>}
+          {categories === "animation" && (
+            <div className='h-screen flex justify-center'>
+              <div className='w-[700px] flex flex-wrap'>
+                {data && ([data.data1an, data.data2an, data.data3an, data.data4an, data.data5an, data.data6an, data.data7an, data.data8an].filter(Boolean)).map((movie) => (
+                  <div className='w-[175px]' key={movie.imdbID}>
+                    {movie.Poster && movie.Poster !== 'N/A' && (
+                      <div
+                        onClick={() => navigate({ to: `/movies/${movie.imdbID}` })}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <img 
+                          src={movie.Poster} 
+                          alt={movie.Title} 
+                          width={150}
+                          style={{ display: 'block' }}
+                        />
+                      </div>
+                    )}
+                    <p>{movie.Title}</p>
+                    {movie.imdbRating && <p>Note IMDb : {movie.imdbRating}/10</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {categories === "thriller" && (
+            <div className='h-screen flex justify-center'>
+              <div className='w-[700px] flex flex-wrap'>
+                {data && ([data.data1t, data.data2t, data.data3t, data.data4t, data.data5t, data.data6t, data.data7t, data.data8t].filter(Boolean)).map((movie) => (
+                  <div className='w-[175px]' key={movie.imdbID}>
+                    {movie.Poster && movie.Poster !== 'N/A' && (
+                      <div
+                        onClick={() => navigate({ to: `/movies/${movie.imdbID}` })}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <img 
+                          src={movie.Poster} 
+                          alt={movie.Title} 
+                          width={150}
+                          style={{ display: 'block' }}
+                        />
+                      </div>
+                    )}
+                    <p>{movie.Title}</p>
+                    {movie.imdbRating && <p>Note IMDb : {movie.imdbRating}/10</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
           {categories === "comédie" && <div>EE</div>}
           {categories === "drame" && <div>FF</div>}
         </div>
