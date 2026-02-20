@@ -18,7 +18,7 @@ function Films() {
     {
       id: 1,
       title: "Dune: Part Two",
-      poster: "https://via.placeholder.com/300x450/1a1a1a/ffffff?text=Dune+2",
+      poster: "https://placehold.co/300x450/1a1a1a/ffffff?text=Dune+2",
       rating: 4.2,
       year: 2024,
       genre: "Science-Fiction",
@@ -28,7 +28,7 @@ function Films() {
     {
       id: 2,
       title: "Oppenheimer",
-      poster: "https://via.placeholder.com/300x450/2a2a2a/ffffff?text=Oppenheimer",
+      poster: "https://placehold.co/300x450/2a2a2a/ffffff?text=Oppenheimer",
       rating: 4.5,
       year: 2023,
       genre: "Drame",
@@ -38,7 +38,7 @@ function Films() {
     {
       id: 3,
       title: "The Batman",
-      poster: "https://via.placeholder.com/300x450/3a3a3a/ffffff?text=Batman",
+      poster: "https://placehold.co/300x450/3a3a3a/ffffff?text=Batman",
       rating: 4.0,
       year: 2022,
       genre: "Action",
@@ -48,7 +48,7 @@ function Films() {
     {
       id: 4,
       title: "Parasite",
-      poster: "https://via.placeholder.com/300x450/4a4a4a/ffffff?text=Parasite",
+      poster: "https://placehold.co/300x450/4a4a4a/ffffff?text=Parasite",
       rating: 4.6,
       year: 2019,
       genre: "Thriller",
@@ -58,7 +58,7 @@ function Films() {
     {
       id: 5,
       title: "Everything Everywhere All at Once",
-      poster: "https://via.placeholder.com/300x450/5a5a5a/ffffff?text=EEAAO",
+      poster: "https://placehold.co/300x450/5a5a5a/ffffff?text=EEAAO",
       rating: 4.4,
       year: 2022,
       genre: "Science-Fiction",
@@ -68,7 +68,7 @@ function Films() {
     {
       id: 6,
       title: "The Holdovers",
-      poster: "https://via.placeholder.com/300x450/6a6a6a/ffffff?text=Holdovers",
+      poster: "https://placehold.co/300x450/6a6a6a/ffffff?text=Holdovers",
       rating: 4.1,
       year: 2023,
       genre: "Drame",
@@ -78,7 +78,7 @@ function Films() {
     {
       id: 7,
       title: "Poor Things",
-      poster: "https://via.placeholder.com/300x450/7a7a7a/ffffff?text=Poor+Things",
+      poster: "https://placehold.co/300x450/7a7a7a/ffffff?text=Poor+Things",
       rating: 4.3,
       year: 2023,
       genre: "Comédie",
@@ -88,7 +88,7 @@ function Films() {
     {
       id: 8,
       title: "Killers of the Flower Moon",
-      poster: "https://via.placeholder.com/300x450/8a8a8a/ffffff?text=KOTFM",
+      poster: "https://placehold.co/300x450/8a8a8a/ffffff?text=KOTFM",
       rating: 4.2,
       year: 2023,
       genre: "Drame",
@@ -98,7 +98,7 @@ function Films() {
     {
       id: 9,
       title: "Anatomy of a Fall",
-      poster: "https://via.placeholder.com/300x450/9a9a9a/ffffff?text=Anatomy",
+      poster: "https://placehold.co/300x450/9a9a9a/ffffff?text=Anatomy",
       rating: 4.0,
       year: 2023,
       genre: "Thriller",
@@ -108,7 +108,7 @@ function Films() {
     {
       id: 10,
       title: "The Zone of Interest",
-      poster: "https://via.placeholder.com/300x450/101010/ffffff?text=Zone+of+Interest",
+      poster: "https://placehold.co/300x450/101010/ffffff?text=Zone+of+Interest",
       rating: 3.8,
       year: 2023,
       genre: "Drame",
@@ -184,7 +184,7 @@ function Films() {
           {filteredMovies.map((movie) => (
             <Link
               key={movie.id}
-              to={`/film/${movie.id}`}
+              to={`/movies/${movie.id}`}
               className={`rounded-lg overflow-hidden shadow-md ${
                 isDark ? 'bg-gray-800' : 'bg-white'
               } hover:shadow-xl transition-all duration-300 transform hover:scale-105`}

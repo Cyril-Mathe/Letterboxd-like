@@ -20,7 +20,7 @@ function Discussion() {
     {
       id: 1,
       username: 'FilmBuff92',
-      avatar: 'https://via.placeholder.com/40x40/4a4a4a/ffffff?text=FB',
+      avatar: 'https://placehold.co/40x40/4a4a4a/ffffff?text=FB',
       status: 'online',
       lastMessage: 'As-tu vu le dernier Nolan ?',
       lastMessageTime: '10:30'
@@ -28,7 +28,7 @@ function Discussion() {
     {
       id: 2,
       username: 'Cinephile_Paris',
-      avatar: 'https://via.placeholder.com/40x40/5a5a5a/ffffff?text=CP',
+      avatar: 'https://placehold.co/40x40/5a5a5a/ffffff?text=CP',
       status: 'online',
       lastMessage: 'Oppenheimer est incroyable !',
       lastMessageTime: '09:45'
@@ -36,7 +36,7 @@ function Discussion() {
     {
       id: 3,
       username: 'MovieLover',
-      avatar: 'https://via.placeholder.com/40x40/6a6a4a/ffffff?text=ML',
+      avatar: 'https://placehold.co/40x40/6a6a4a/ffffff?text=ML',
       status: 'offline',
       lastMessage: 'Quel est ton film préféré ?',
       lastMessageTime: 'Hier'
@@ -44,7 +44,7 @@ function Discussion() {
     {
       id: 4,
       username: 'CinemaAddict',
-      avatar: 'https://via.placeholder.com/40x40/7a7a7a/ffffff?text=CA',
+      avatar: 'https://placehold.co/40x40/7a7a7a/ffffff?text=CA',
       status: 'online',
       lastMessage: 'Les effets spéciaux de Dune...',
       lastMessageTime: '08:20'
@@ -52,7 +52,7 @@ function Discussion() {
     {
       id: 5,
       username: 'FilmCritic',
-      avatar: 'https://via.placeholder.com/40x40/8a8a8a/ffffff?text=FC',
+      avatar: 'https://placehold.co/40x40/8a8a8a/ffffff?text=FC',
       status: 'offline',
       lastMessage: 'Analyse du dernier Scorsese',
       lastMessageTime: '2 jours'
