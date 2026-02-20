@@ -144,8 +144,40 @@ export default function RecommendationsPage() {
         const data6t = await thriller6.json()
         const data7t = await thriller7.json()
         const data8t = await thriller8.json()
+        const comedy1 = await fetch(`https://www.omdbapi.com/?t=snatch&apikey=${apiKey}`)
+        const comedy2 = await fetch(`https://www.omdbapi.com/?t=fargo&apikey=${apiKey}`)
+        const comedy3 = await fetch(`https://www.omdbapi.com/?t=the%20nice%20guys&apikey=${apiKey}`)
+        const comedy4 = await fetch(`https://www.omdbapi.com/?t=the%20big%20lebowski&apikey=${apiKey}`)
+        const comedy5 = await fetch(`https://www.omdbapi.com/?t=the%20grand%20budapest%20hotel&apikey=${apiKey}`)
+        const comedy6 = await fetch(`https://www.omdbapi.com/?t=airplane&apikey=${apiKey}`)
+        const comedy7 = await fetch(`https://www.omdbapi.com/?t=tropic%20thunder&apikey=${apiKey}`)
+        const comedy8 = await fetch(`https://www.omdbapi.com/?t=superbad&apikey=${apiKey}`)
+        const data1com = await comedy1.json()
+        const data2com = await comedy2.json()
+        const data3com = await comedy3.json()
+        const data4com = await comedy4.json()
+        const data5com = await comedy5.json()
+        const data6com = await comedy6.json()
+        const data7com = await comedy7.json()
+        const data8com = await comedy8.json()
+        const drama1 = await fetch(`https://www.omdbapi.com/?t=mulholland%20drive&apikey=${apiKey}`)
+        const drama2 = await fetch(`https://www.omdbapi.com/?t=twin%20peaks%20fire%20walk%20with%20me&apikey=${apiKey}`)
+        const drama3 = await fetch(`https://www.omdbapi.com/?t=lost%20highway&apikey=${apiKey}`)
+        const drama4 = await fetch(`https://www.omdbapi.com/?t=barry%20lyndon&apikey=${apiKey}`)
+        const drama5 = await fetch(`https://www.omdbapi.com/?t=persona&apikey=${apiKey}`)
+        const drama6 = await fetch(`https://www.omdbapi.com/?t=one%20flew%20over%20the%20cuckoo%27s%20nest&apikey=${apiKey}`)
+        const drama7 = await fetch(`https://www.omdbapi.com/?t=there%20will%20be%20blood&apikey=${apiKey}`)
+        const drama8 = await fetch(`https://www.omdbapi.com/?t=magnolia&apikey=${apiKey}`)
+        const data1d = await drama1.json()
+        const data2d = await drama2.json()
+        const data3d = await drama3.json()
+        const data4d = await drama4.json()
+        const data5d = await drama5.json()
+        const data6d = await drama6.json()
+        const data7d = await drama7.json()
+        const data8d = await drama8.json()
         return {
-          data1, data2, data3, data4, data5, data6, data7, data8, data1c, data2c, data3c, data4c, data5c, data6c, data7c, data8c, data1a, data2a, data3a, data4a, data5a, data6a, data7a, data8a, data1w, data2w, data3w, data4w, data5w, data6w, data7w, data8w, data1h, data2h, data3h, data4h, data5h, data6h, data7h, data8h, data1sf, data2sf, data3sf, data4sf, data5sf ,data6sf, data7sf, data8sf, data1an, data2an, data3an, data4an, data5an, data6an, data7an, data8an, data1t, data2t, data3t, data4t, data5t, data6t, data7t, data8t
+          data1, data2, data3, data4, data5, data6, data7, data8, data1c, data2c, data3c, data4c, data5c, data6c, data7c, data8c, data1a, data2a, data3a, data4a, data5a, data6a, data7a, data8a, data1w, data2w, data3w, data4w, data5w, data6w, data7w, data8w, data1h, data2h, data3h, data4h, data5h, data6h, data7h, data8h, data1sf, data2sf, data3sf, data4sf, data5sf ,data6sf, data7sf, data8sf, data1an, data2an, data3an, data4an, data5an, data6an, data7an, data8an, data1t, data2t, data3t, data4t, data5t, data6t, data7t, data8t, data1com, data2com, data3com, data4com, data5com, data6com, data7com, data8com, data1d, data2d, data3d, data4d, data5d, data6d, data7d, data8d
         }
       },
       staleTime: 1000 * 30,
@@ -380,8 +412,58 @@ export default function RecommendationsPage() {
             </div>
           )}
           
-          {categories === "comédie" && <div>EE</div>}
-          {categories === "drame" && <div>FF</div>}
+          {categories === "comédie" && (
+            <div className='h-screen flex justify-center'>
+              <div className='w-[700px] flex flex-wrap'>
+                {data && ([data.data1com, data.data2com, data.data3com, data.data4com, data.data5com, data.data6com, data.data7com, data.data8com].filter(Boolean)).map((movie) => (
+                  <div className='w-[175px]' key={movie.imdbID}>
+                    {movie.Poster && movie.Poster !== 'N/A' && (
+                      <div
+                        onClick={() => navigate({ to: `/movies/${movie.imdbID}` })}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <img 
+                          src={movie.Poster} 
+                          alt={movie.Title} 
+                          width={150}
+                          style={{ display: 'block' }}
+                        />
+                      </div>
+                    )}
+                    <p>{movie.Title}</p>
+                    {movie.imdbRating && <p>Note IMDb : {movie.imdbRating}/10</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {categories === "drame" && (
+            <div className='h-screen flex justify-center'>
+              <div className='w-[700px] flex flex-wrap'>
+                {data && ([data.data1d, data.data2d, data.data3d, data.data4d, data.data5d, data.data6d, data.data7d, data.data8d].filter(Boolean)).map((movie) => (
+                  <div className='w-[175px]' key={movie.imdbID}>
+                    {movie.Poster && movie.Poster !== 'N/A' && (
+                      <div
+                        onClick={() => navigate({ to: `/movies/${movie.imdbID}` })}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <img 
+                          src={movie.Poster} 
+                          alt={movie.Title} 
+                          width={150}
+                          style={{ display: 'block' }}
+                        />
+                      </div>
+                    )}
+                    <p>{movie.Title}</p>
+                    {movie.imdbRating && <p>Note IMDb : {movie.imdbRating}/10</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
         </div>
         </>
     )
