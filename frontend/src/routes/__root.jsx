@@ -2,7 +2,7 @@ import { createRootRoute, Link, Outlet, redirect } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { useState } from 'react'
 import { ThemeContext, AuthContext } from '../contexts'
-import { Film, User, MessageCircle, Home, LogOut, Sun, Moon } from 'lucide-react'
+import { Film, User, MessageCircle, Home, LogOut, Sun, Moon, Search, X } from 'lucide-react'
 
 const RootLayout = () => {
   const [isDark, setIsDark] = useState(() => {
@@ -13,6 +13,8 @@ const RootLayout = () => {
     const savedUser = localStorage.getItem('cineconnect_user');
     return savedUser ? JSON.parse(savedUser) : null;
   });
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const toggleTheme = () => {
     const newTheme = !isDark;
@@ -21,7 +23,6 @@ const RootLayout = () => {
   };
 
   const login = (email, password) => {
-    // Simulation de connexion
     const savedUsers = localStorage.getItem('cineconnect_users');
     if (savedUsers) {
       const users = JSON.parse(savedUsers);
@@ -37,11 +38,9 @@ const RootLayout = () => {
   };
 
   const register = (username, email, password) => {
-    // Simulation d'inscription
     const savedUsers = localStorage.getItem('cineconnect_users');
     const users = savedUsers ? JSON.parse(savedUsers) : [];
 
-    // Vérifier si l'email existe déjà
     if (users.find((u) => u.email === email)) {
       return false;
     }
@@ -67,6 +66,16 @@ const RootLayout = () => {
     localStorage.removeItem('cineconnect_user');
   };
 
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      // Navigate to films page with search query
+      window.location.href = `/films?search=${encodeURIComponent(searchQuery)}`;
+      setSearchOpen(false);
+      setSearchQuery('');
+    }
+  };
+
   const navigation = [
     { name: 'Accueil', href: '/', icon: Home },
     { name: 'Films', href: '/films', icon: Film },
@@ -77,67 +86,127 @@ const RootLayout = () => {
   return (
     <ThemeContext.Provider value={{ isDark, toggleTheme }}>
       <AuthContext.Provider value={{ user, login, register, logout }}>
-        <div className={isDark ? 'dark' : ''}>
-          {/* Desktop Sidebar - Only show if authenticated */}
+        <div className="min-h-screen bg-[#14181c]">
+          {/* Top Navbar - Letterboxd Style */}
           {user && (
-            <div className={`hidden md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col ${isDark ? 'bg-gray-800' : 'bg-white'} border-r ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-              <div className="flex flex-col flex-grow pt-5 pb-4 overflow-y-auto">
-                <div className="flex items-center flex-shrink-0 px-4">
-                  <Film className="h-8 w-8 text-green-500" />
-                  <span className="ml-2 text-xl font-bold">CinéConnect</span>
-                </div>
-                <div className="mt-8 flex-grow flex flex-col">
-                  <nav className="flex-1 px-2 space-y-1">
+            <nav className="fixed top-0 left-0 right-0 z-50 bg-[#14181c] border-b border-[#2c3440]">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center justify-between h-14">
+                  {/* Logo */}
+                  <div className="flex items-center">
+                    <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
+                      <Film className="h-6 w-6 text-[#00e054]" />
+                      <span className="ml-2 text-lg font-semibold text-white tracking-tight">CINE CONNECT</span>
+                    </Link>
+                  </div>
+
+                  {/* Desktop Navigation */}
+                  <div className="hidden md:flex items-center space-x-1">
                     {navigation.map((item) => {
                       if (item.requiresAuth && !user) return null
                       return (
                         <Link
                           key={item.name}
                           to={item.href}
-                          className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors ${
-                            window.location.pathname === item.href
-                              ? 'bg-green-500 text-white'
-                              : isDark
-                                ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                          }`}
+                          className="px-3 py-2 text-sm text-[#9ab] hover:text-[#00e054] transition-colors rounded-md hover:bg-[#1c2228]"
                         >
-                          <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
                           {item.name}
                         </Link>
                       )
                     })}
-                  </nav>
-                  <div className="px-2 mt-6">
+                  </div>
+
+                  {/* Right Side */}
+                  <div className="flex items-center space-x-3">
+                    {/* Search - Icon or Input */}
+                    {searchOpen ? (
+                      <form onSubmit={handleSearch} className="flex items-center">
+                        <input
+                          type="text"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder="Rechercher un film..."
+                          className="px-3 py-1.5 bg-[#1c2228] border border-[#2c3440] rounded-md text-white placeholder-[#9ab] text-sm focus:outline-none focus:border-[#00e054] w-40 md:w-64"
+                          autoFocus
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setSearchOpen(false)}
+                          className="p-2 text-[#9ab] hover:text-white transition-colors"
+                        >
+                          <X className="h-5 w-5" />
+                        </button>
+                      </form>
+                    ) : (
+                      <button 
+                        onClick={() => setSearchOpen(true)}
+                        className="p-2 text-[#9ab] hover:text-[#00e054] transition-colors rounded-full hover:bg-[#1c2228]"
+                      >
+                        <Search className="h-5 w-5" />
+                      </button>
+                    )}
+
+                    {/* Theme Toggle */}
                     <button
                       onClick={toggleTheme}
-                      className={`w-full group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors ${
-                        isDark
-                          ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                      }`}
+                      className="p-2 text-[#9ab] hover:text-[#00e054] transition-colors rounded-full hover:bg-[#1c2228]"
                     >
-                      {isDark ? <Sun className="mr-3 h-5 w-5" /> : <Moon className="mr-3 h-5 w-5" />}
-                      {isDark ? 'Mode clair' : 'Mode sombre'}
+                      {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                     </button>
-                    {user && (
-                      <button
-                        onClick={logout}
-                        className="w-full mt-2 group flex items-center px-2 py-2 text-sm font-medium rounded-md text-red-600 hover:bg-red-50 hover:text-red-900 transition-colors"
-                      >
-                        <LogOut className="mr-3 h-5 w-5" />
-                        Déconnexion
-                      </button>
+
+                    {/* User Profile */}
+                    {user ? (
+                      <div className="flex items-center space-x-3">
+                        <Link
+                          to="/profile"
+                          className="flex items-center space-x-2 hover:bg-[#1c2228] px-2 py-1 rounded-full transition-colors"
+                        >
+                          <div className="h-8 w-8 rounded-full bg-[#00e054] flex items-center justify-center">
+                            <span className="text-sm font-medium text-black">
+                              {user.username.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                        </Link>
+                        <button
+                          onClick={logout}
+                          className="p-2 text-[#9ab] hover:text-red-500 transition-colors rounded-full hover:bg-[#1c2228]"
+                          title="Déconnexion"
+                        >
+                          <LogOut className="h-5 w-5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2">
+                        <Link
+                          to="/login"
+                          className="px-3 py-1.5 text-sm text-[#9ab] hover:text-[#00e054] transition-colors"
+                        >
+                          Connexion
+                        </Link>
+                        <Link
+                          to="/register"
+                          className="px-3 py-1.5 text-sm bg-[#00e054] text-black font-medium rounded-full hover:bg-[#00cc45] transition-colors"
+                        >
+                          Inscription
+                        </Link>
+                      </div>
                     )}
                   </div>
                 </div>
               </div>
-            </div>
+            </nav>
           )}
 
-          {/* Mobile Navigation - Only show if authenticated */}
+          {/* Main Content */}
+          <div className={user ? "pt-14" : ""}>
+            <main>
+              <Outlet />
+            </main>
+          </div>
+
+          {/* Mobile Bottom Navigation */}
           {user && (
-            <div className={`md:hidden fixed bottom-0 left-0 right-0 z-50 ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-t`}>
+            <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#14181c] border-t border-[#2c3440]">
               <div className="flex">
                 {navigation.map((item) => {
                   if (item.requiresAuth && !user) return null
@@ -145,13 +214,7 @@ const RootLayout = () => {
                     <Link
                       key={item.name}
                       to={item.href}
-                      className={`flex-1 flex flex-col items-center justify-center py-2 px-1 text-xs transition-colors ${
-                        window.location.pathname === item.href
-                          ? 'text-green-500'
-                          : isDark
-                            ? 'text-gray-400 hover:text-white'
-                            : 'text-gray-600 hover:text-gray-900'
-                      }`}
+                      className="flex-1 flex flex-col items-center justify-center py-2 px-1 text-xs text-[#9ab] hover:text-[#00e054] transition-colors"
                     >
                       <item.icon className="h-5 w-5 mb-1" />
                       {item.name}
@@ -161,13 +224,6 @@ const RootLayout = () => {
               </div>
             </div>
           )}
-
-          {/* Main content */}
-          <div className={user ? "md:pl-64" : ""}>
-            <main className={user ? "pb-16 md:pb-0" : ""}>
-              <Outlet />
-            </main>
-          </div>
 
           <TanStackRouterDevtools />
         </div>
@@ -179,12 +235,10 @@ const RootLayout = () => {
 export const Route = createRootRoute({
   component: RootLayout,
   beforeLoad: ({ location }) => {
-    // Don't redirect for login and register pages
     if (location.pathname === '/login' || location.pathname === '/register') {
       return
     }
 
-    // Redirect to login if not authenticated
     const user = localStorage.getItem('cineconnect_user')
     if (!user) {
       throw redirect({
