@@ -46,5 +46,4 @@ export type User = typeof usersTable.$inferSelect;
 
 export type Movie = typeof moviesTable.$inferSelect;
 
-export type InsertReview = typeof reviewsTable.$inferInsert;
-export type SelectReview = typeof reviewsTable.$inferSelect;
+export type Review = typeof reviewsTable.$inferSelect;
