@@ -44,8 +44,7 @@ export const reviewsTable = pgTable("reviews_table", {
 
 export type User = typeof usersTable.$inferSelect;
 
-export type InsertPost = typeof moviesTable.$inferInsert;
-export type SelectPost = typeof moviesTable.$inferSelect;
+export type Movie = typeof moviesTable.$inferSelect;
 
 export type InsertReview = typeof reviewsTable.$inferInsert;
 export type SelectReview = typeof reviewsTable.$inferSelect;
