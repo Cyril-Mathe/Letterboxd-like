@@ -1,5 +1,5 @@
 // reviews controllers
-import pool from "../../database/dbConnect.js";
+import pool from "../../../database/dbConnect.js";
 
 export async function getReviews(req, res) {
     try {

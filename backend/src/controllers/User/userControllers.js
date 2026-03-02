@@ -1,5 +1,5 @@
 // controllers
-import pool from "../../database/dbConnect.js";
+import pool from "../../../database/createDb.js";
 import bcrypt from "bcrypt";
 
 export async function getAllUsers(req, res) {

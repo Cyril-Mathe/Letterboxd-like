@@ -1,5 +1,5 @@
 // movies controllers
-import pool from "../../database/dbConnect.js";
+import pool from "../../../database/dbConnect.js";
 
 export async function getMovies(req, res) {
     try {
