@@ -1,52 +1,57 @@
 import { db } from "../../db"
 import { usersTable } from "../../model/schema"
 import { eq } from "drizzle-orm"
-import { User } from "../../model/schema"
+import { Request, Response } from "express"
 
-export async function getUsers() {
+export async function getUsers(req: Request, res: Response) {
     try {
         const users = await db.select().from(usersTable);
-        return users;
+        res.json({ success: true, data: users });
     } catch (error) {
         console.error(error);
-        return { error: "Failed to get users"};
+        res.status(500).json({ error: "Failed to get users" });
     }
 }
 
-export async function getUserById(id: number) {
+export async function getUserById(req: Request, res: Response) {
     try {
+        const id = Number(req.params.id);
         const user = await db.select().from(usersTable).where(eq(usersTable.id, id)).limit(1);
-        return user[0] || null;
+        res.json({ success: true, data: user[0] || null });
     } catch (error) {
         console.error(error);
-        return { error: "Failed to get user"};
+        res.status(500).json({ error: "Failed to get user" });
     }
 }
 
-export async function createUser(user: Omit<User, 'id' | 'createdAt'>) {
+export async function createUser(req: Request, res: Response) {
     try {
-        await db.insert(usersTable).values(user);
+        await db.insert(usersTable).values(req.body);
+        res.status(201).json({ success: true });
     } catch (error) {
         console.error(error);
-        return { error: "Failed to create user"};
+        res.status(500).json({ error: "Failed to create user" });
     }
 }
 
-export async function updateUser(user: Omit<User, 'createdAt'>) {
+export async function updateUser(req: Request, res: Response) {
     try {
-        await db.update(usersTable).set(user).where(eq(usersTable.id, user.id));
+        const id = Number(req.params.id);
+        await db.update(usersTable).set({ ...req.body, id }).where(eq(usersTable.id, id));
+        res.json({ success: true });
     } catch (error) {
         console.error(error);
-        return { error: "Failed to update user"};
+        res.status(500).json({ error: "Failed to update user" });
     }
 }
 
-export async function deleteUser(id: number) {
+export async function deleteUser(req: Request, res: Response) {
     try {
+        const id = Number(req.params.id);
         await db.delete(usersTable).where(eq(usersTable.id, id));
-        return { message: "User deleted successfully" };
+        res.json({ message: "User deleted successfully" });
     } catch (error) {
         console.error(error);
-        return { error: "Failed to delete user"};
+        res.status(500).json({ error: "Failed to delete user" });
     }
 }
