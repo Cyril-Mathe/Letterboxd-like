@@ -1,52 +1,57 @@
 import { db } from "../../db"
 import { moviesTable } from "../../model/schema"
 import { eq } from "drizzle-orm"
-import { Movie } from "../../model/schema"
+import { Request, Response } from "express"
 
-export async function getMovies() {
+export async function getMovies(req: Request, res: Response) {
     try {
         const movies = await db.select().from(moviesTable);
-        return movies;
+        res.json({ success: true, data: movies });
     } catch (error) {
         console.error(error);
-        return { error: "Failed to get movies"};
+        res.status(500).json({ error: "Failed to get movies" });
     }
 }
 
-export async function getMovieById(id: number) {
+export async function getMovieById(req: Request, res: Response) {
     try {
+        const id = Number(req.params.id);
         const movie = await db.select().from(moviesTable).where(eq(moviesTable.id, id)).limit(1);
-        return movie[0] || null;
+        res.json({ success: true, data: movie[0] || null });
     } catch (error) {
         console.error(error);
-        return { error: "Failed to get movie"};
+        res.status(500).json({ error: "Failed to get movie" });
     }
 }
 
-export async function createMovie(movie: Omit<Movie, 'id' | 'createdAt'>) {
+export async function createMovie(req: Request, res: Response) {
     try {
-        await db.insert(moviesTable).values(movie);
+        await db.insert(moviesTable).values(req.body);
+        res.status(201).json({ success: true });
     } catch (error) {
         console.error(error);
-        return { error: "Failed to create movie"};
+        res.status(500).json({ error: "Failed to create movie" });
     }
 }
 
-export async function updateMovie(movie: Omit<Movie, 'createdAt'>) {
+export async function updateMovie(req: Request, res: Response) {
     try {
-        await db.update(moviesTable).set(movie).where(eq(moviesTable.id, movie.id));
+        const id = Number(req.params.id);
+        await db.update(moviesTable).set({ ...req.body, id }).where(eq(moviesTable.id, id));
+        res.json({ success: true });
     } catch (error) {
         console.error(error);
-        return { error: "Failed to update movie"};
+        res.status(500).json({ error: "Failed to update movie" });
     }
 }
 
-export async function deleteMovie(id: number) {
+export async function deleteMovie(req: Request, res: Response) {
     try {
+        const id = Number(req.params.id);
         await db.delete(moviesTable).where(eq(moviesTable.id, id));
-        return { message: "Movie deleted successfully" };
+        res.json({ message: "Movie deleted successfully" });
     } catch (error) {
         console.error(error);
-        return { error: "Failed to delete movie"};
+        res.status(500).json({ error: "Failed to delete movie" });
     }
 }
