@@ -1,52 +1,57 @@
 import { db } from "../../db"
 import { reviewsTable } from "../../model/schema"
 import { eq } from "drizzle-orm"
-import { Review } from "../../model/schema"
+import { Request, Response } from "express"
 
-export async function getReviews() {
+export async function getReviews(req: Request, res: Response) {
     try {
         const reviews = await db.select().from(reviewsTable);
-        return reviews;
+        res.json({ success: true, data: reviews });
     } catch (error) {
         console.error(error);
-        return { error: "Failed to get reviews"};
+        res.status(500).json({ error: "Failed to get reviews" });
     }
 }
 
-export async function getReviewById(id: number) {
+export async function getReviewById(req: Request, res: Response) {
     try {
+        const id = Number(req.params.id);
         const review = await db.select().from(reviewsTable).where(eq(reviewsTable.id, id)).limit(1);
-        return review[0] || null;
+        res.json({ success: true, data: review[0] || null });
     } catch (error) {
         console.error(error);
-        return { error: "Failed to get review"};
+        res.status(500).json({ error: "Failed to get review" });
     }
 }
 
-export async function createReview(review: Omit<Review, 'id' | 'createdAt'>) {
+export async function createReview(req: Request, res: Response) {
     try {
-        await db.insert(reviewsTable).values(review);
+        await db.insert(reviewsTable).values(req.body);
+        res.status(201).json({ success: true });
     } catch (error) {
         console.error(error);
-        return { error: "Failed to create review"};
+        res.status(500).json({ error: "Failed to create review" });
     }
 }
 
-export async function updateReview(review: Omit<Review, 'createdAt'>) {
+export async function updateReview(req: Request, res: Response) {
     try {
-        await db.update(reviewsTable).set(review).where(eq(reviewsTable.id, review.id));
+        const id = Number(req.params.id);
+        await db.update(reviewsTable).set({ ...req.body, id }).where(eq(reviewsTable.id, id));
+        res.json({ success: true });
     } catch (error) {
         console.error(error);
-        return { error: "Failed to update review"};
+        res.status(500).json({ error: "Failed to update review" });
     }
 }
 
-export async function deleteReview(id: number) {
+export async function deleteReview(req: Request, res: Response) {
     try {
+        const id = Number(req.params.id);
         await db.delete(reviewsTable).where(eq(reviewsTable.id, id));
-        return { message: "Review deleted successfully" };
+        res.json({ message: "Review deleted successfully" });
     } catch (error) {
         console.error(error);
-        return { error: "Failed to delete review"};
+        res.status(500).json({ error: "Failed to delete review" });
     }
 }
