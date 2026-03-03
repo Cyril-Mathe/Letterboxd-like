@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as RecommendationsRouteImport } from './routes/recommendations'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FilmsRouteImport } from './routes/films'
@@ -21,6 +22,11 @@ import { Route as MoviesMovieIdRouteImport } from './routes/movies/$movieId'
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecommendationsRoute = RecommendationsRouteImport.update({
+  id: '/recommendations',
+  path: '/recommendations',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileRoute = ProfileRouteImport.update({
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/films': typeof FilmsRoute
   '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
+  '/recommendations': typeof RecommendationsRoute
   '/register': typeof RegisterRoute
   '/movies/$movieId': typeof MoviesMovieIdRoute
 }
@@ -76,6 +83,7 @@ export interface FileRoutesByTo {
   '/films': typeof FilmsRoute
   '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
+  '/recommendations': typeof RecommendationsRoute
   '/register': typeof RegisterRoute
   '/movies/$movieId': typeof MoviesMovieIdRoute
 }
@@ -87,6 +95,7 @@ export interface FileRoutesById {
   '/films': typeof FilmsRoute
   '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
+  '/recommendations': typeof RecommendationsRoute
   '/register': typeof RegisterRoute
   '/movies/$movieId': typeof MoviesMovieIdRoute
 }
@@ -99,6 +108,7 @@ export interface FileRouteTypes {
     | '/films'
     | '/login'
     | '/profile'
+    | '/recommendations'
     | '/register'
     | '/movies/$movieId'
   fileRoutesByTo: FileRoutesByTo
@@ -109,6 +119,7 @@ export interface FileRouteTypes {
     | '/films'
     | '/login'
     | '/profile'
+    | '/recommendations'
     | '/register'
     | '/movies/$movieId'
   id:
@@ -119,6 +130,7 @@ export interface FileRouteTypes {
     | '/films'
     | '/login'
     | '/profile'
+    | '/recommendations'
     | '/register'
     | '/movies/$movieId'
   fileRoutesById: FileRoutesById
@@ -130,6 +142,7 @@ export interface RootRouteChildren {
   FilmsRoute: typeof FilmsRoute
   LoginRoute: typeof LoginRoute
   ProfileRoute: typeof ProfileRoute
+  RecommendationsRoute: typeof RecommendationsRoute
   RegisterRoute: typeof RegisterRoute
   MoviesMovieIdRoute: typeof MoviesMovieIdRoute
 }
@@ -141,6 +154,13 @@ declare module '@tanstack/react-router' {
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recommendations': {
+      id: '/recommendations'
+      path: '/recommendations'
+      fullPath: '/recommendations'
+      preLoaderRoute: typeof RecommendationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile': {
@@ -202,6 +222,7 @@ const rootRouteChildren: RootRouteChildren = {
   FilmsRoute: FilmsRoute,
   LoginRoute: LoginRoute,
   ProfileRoute: ProfileRoute,
+  RecommendationsRoute: RecommendationsRoute,
   RegisterRoute: RegisterRoute,
   MoviesMovieIdRoute: MoviesMovieIdRoute,
 }
