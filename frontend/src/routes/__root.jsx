@@ -3,8 +3,13 @@ import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { useState } from 'react'
 import { ThemeContext, AuthContext } from '../contexts'
 import { Film, User, MessageCircle, Home, LogOut, Sun, Moon, Search, X } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
 
 const RootLayout = () => {
+  const navigate = useNavigate()
+  const apiKey = import.meta.env.VITE_OMDB_API_KEY
+
   const [isDark, setIsDark] = useState(() => {
     const savedTheme = localStorage.getItem('cineconnect_theme');
     return savedTheme === 'dark';
@@ -13,8 +18,10 @@ const RootLayout = () => {
     const savedUser = localStorage.getItem('cineconnect_user');
     return savedUser ? JSON.parse(savedUser) : null;
   });
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+
+  // Search states
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
   const toggleTheme = () => {
     const newTheme = !isDark;
@@ -66,15 +73,34 @@ const RootLayout = () => {
     localStorage.removeItem('cineconnect_user');
   };
 
+  // Search function - returns multiple results
+  const { data: searchResults, isLoading: isSearching } = useQuery({
+    queryKey: ['search', searchQuery],
+    queryFn: async () => {
+      if (!searchQuery || searchQuery.length < 2) return []
+      
+      const res = await fetch(
+        `https://www.omdbapi.com/?s=${encodeURIComponent(searchQuery)}&type=movie&page=1&apikey=${apiKey}`
+      )
+      const data = await res.json()
+      
+      if (data.Response === 'True' && data.Search) {
+        return data.Search
+      }
+      return []
+    },
+    enabled: searchQuery.length >= 2,
+  })
+
   const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      // Navigate to films page with search query
-      window.location.href = `/films?search=${encodeURIComponent(searchQuery)}`;
-      setSearchOpen(false);
-      setSearchQuery('');
-    }
-  };
+    e.preventDefault()
+  }
+
+const handleMovieClick = (imdbID) => {
+    setSearchOpen(false)
+    setSearchQuery('')
+    navigate({ to: '/movies/$movieId', params: { movieId: imdbID } })
+  }
 
   const navigation = [
     { name: 'Accueil', href: '/', icon: Home },
@@ -118,29 +144,77 @@ const RootLayout = () => {
 
                   {/* Right Side */}
                   <div className="flex items-center space-x-3">
-                    {/* Search - Icon or Input */}
+                    {/* Search */}
                     {searchOpen ? (
-                      <form onSubmit={handleSearch} className="flex items-center">
-                        <input
-                          type="text"
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          placeholder="Rechercher un film..."
-                          className="px-3 py-1.5 bg-[#1c2228] border border-[#2c3440] rounded-md text-white placeholder-[#9ab] text-sm focus:outline-none focus:border-[#00e054] w-40 md:w-64"
-                          autoFocus
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setSearchOpen(false)}
-                          className="p-2 text-[#9ab] hover:text-white transition-colors"
-                        >
-                          <X className="h-5 w-5" />
-                        </button>
-                      </form>
+                      <div className="relative">
+                        <div className="flex items-center">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9ab]" />
+                          <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Rechercher un film..."
+                            className="pl-10 pr-10 py-1.5 bg-[#1c2228] border border-[#2c3440] rounded-md text-white placeholder-[#9ab] text-sm focus:outline-none focus:border-[#00e054] w-48 md:w-56"
+                            autoFocus
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSearchOpen(false)
+                              setSearchQuery('')
+                            }}
+                            className="absolute right-2 p-1 text-[#9ab] hover:text-white transition-colors"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+
+                        {/* Search Results Dropdown */}
+                        {searchQuery.length >= 2 && (
+                          <div className="absolute top-full mt-2 left-0 right-0 bg-[#1c2228] border border-[#2c3440] rounded-md shadow-lg max-h-80 overflow-y-auto z-50">
+                            {isSearching ? (
+                              <div className="p-4 text-center text-[#9ab]">
+                                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-[#00e054] mx-auto"></div>
+                              </div>
+                            ) : searchResults && searchResults.length > 0 ? (
+                              <div className="py-2">
+                                {searchResults.map((movie) => (
+                                  <button
+                                    key={movie.imdbID}
+                                    onClick={() => handleMovieClick(movie.imdbID)}
+                                    className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[#2c3440] transition-colors text-left"
+                                  >
+                                    {movie.Poster && movie.Poster !== 'N/A' ? (
+                                      <img
+                                        src={movie.Poster}
+                                        alt={movie.Title}
+                                        className="w-10 h-14 object-cover rounded"
+                                      />
+                                    ) : (
+                                      <div className="w-10 h-14 bg-[#2c3440] rounded flex items-center justify-center">
+                                        <Film className="h-4 w-4 text-[#9ab]" />
+                                      </div>
+                                    )}
+                                    <div>
+                                      <p className="text-white text-sm font-medium">{movie.Title}</p>
+                                      <p className="text-[#9ab] text-xs">{movie.Year}</p>
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="p-4 text-center text-[#9ab] text-sm">
+                                Aucun résultat trouvé
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     ) : (
                       <button 
                         onClick={() => setSearchOpen(true)}
                         className="p-2 text-[#9ab] hover:text-[#00e054] transition-colors rounded-full hover:bg-[#1c2228]"
+                        title="Rechercher"
                       >
                         <Search className="h-5 w-5" />
                       </button>

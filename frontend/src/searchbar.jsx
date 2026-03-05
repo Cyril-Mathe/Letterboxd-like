@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
 
@@ -11,24 +11,56 @@ export default function Searchbar() {
   // valeur réellement utilisée pour la requête
   const [search, setSearch] = useState("")
 
-  const { data, isPending, isError, error } = useQuery({
+  // Recherche exacte d'abord, puis large si pas de résultat exact
+  const { data, isPending, isError, error, dataUpdated } = useQuery({
     queryKey: ["movies", search],
     queryFn: async () => {
-      const res = await fetch(
-        `https://www.omdbapi.com/?s=${encodeURIComponent(search)}&apikey=${apiKey}`
+      if (!search) return []
+
+      // D'abord, essayer une recherche exacte avec ?t=
+      const exactRes = await fetch(
+        `https://www.omdbapi.com/?t=${encodeURIComponent(search)}&apikey=${apiKey}`
       )
 
-      if (!res.ok) {
+      if (!exactRes.ok) {
         throw new Error("Erreur réseau")
       }
 
-      const data = await res.json()
+      const exactData = await exactRes.json()
 
-      if (data.Response === "False") {
-        throw new Error(data.Error)
+      // Si on a une correspondance exacte (titre identique, insensible à la casse)
+      if (exactData.Response === "True" && 
+          exactData.Title.toLowerCase() === search.toLowerCase()) {
+        return [exactData]
       }
 
-      return data.Search
+      // Sinon, recherche large avec ?s=
+      const searchRes = await fetch(
+        `https://www.omdbapi.com/?s=${encodeURIComponent(search)}&apikey=${apiKey}`
+      )
+
+      if (!searchRes.ok) {
+        throw new Error("Erreur réseau")
+      }
+
+      const searchData = await searchRes.json()
+
+      if (searchData.Response === "False") {
+        throw new Error(searchData.Error)
+      }
+
+      // Trier pour mettre le film exact en premier s'il existe dans les résultats
+      const results = searchData.Search || []
+      const exactMatchIndex = results.findIndex(
+        (m) => m.Title.toLowerCase() === search.toLowerCase()
+      )
+      
+      if (exactMatchIndex > 0) {
+        const exactMatch = results.splice(exactMatchIndex, 1)[0]
+        results.unshift(exactMatch)
+      }
+
+      return results
     },
     enabled: !!search, // la requête ne se lance que si search n'est pas vide
   })
@@ -37,6 +69,13 @@ export default function Searchbar() {
     e.preventDefault()
     setSearch(input.trim())
   }
+
+  // Effacer les résultats quand l'input est vide
+  useEffect(() => {
+    if (!input.trim()) {
+      setSearch("")
+    }
+  }, [input])
 
   return (
     <div>

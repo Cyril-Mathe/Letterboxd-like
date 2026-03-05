@@ -1,32 +1,93 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useContext, useState } from 'react'
+import { useContext, useState, useEffect } from 'react'
 import { Link } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
-import { ThemeContext, AuthContext } from '../../contexts'
-import { Star, Heart, Eye, ArrowLeft, Calendar, Clock, Film, Users, Loader } from 'lucide-react'
-import { ErrorMessage } from '../../components/Loader'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { AuthContext } from '../../contexts'
+import { Star, Heart, Eye, ArrowLeft, Calendar, Clock, Film, Users, Trash2 } from 'lucide-react'
 import { MovieCardSkeleton } from '../../components/MovieCard'
 
 export const Route = createFileRoute('/movies/$movieId')({
   component: FilmDetail,
 })
 
+// Clés localStorage
+const FAVORITES_KEY = 'cineconnect_favorites'
+const WATCHED_KEY = 'cineconnect_watched'
+const REVIEWS_KEY = 'cineconnect_reviews'
+
 function FilmDetail() {
   const { movieId } = Route.useParams()
-  const { isDark } = useContext(ThemeContext)
-  const { user } = useContext(AuthContext)
-  const [isFavorite, setIsFavorite] = useState(false)
-  const [isWatched, setIsWatched] = useState(false)
+  const { user } = useContext(AuthContext) || { user: null }
+  const apiKey = import.meta.env.VITE_OMDB_API_KEY
+  const queryClient = useQueryClient()
+
+  // Charger les favoris depuis localStorage
+  const [favorites, setFavorites] = useState(() => {
+    const saved = localStorage.getItem(FAVORITES_KEY)
+    return saved ? JSON.parse(saved) : []
+  })
+
+  // Charger les films vus depuis localStorage
+  const [watched, setWatched] = useState(() => {
+    const saved = localStorage.getItem(WATCHED_KEY)
+    return saved ? JSON.parse(saved) : []
+  })
+
+  // Charger les reviews depuis localStorage
+  const [reviews, setReviews] = useState(() => {
+    const saved = localStorage.getItem(REVIEWS_KEY)
+    return saved ? JSON.parse(saved) : []
+  })
+
+  // État local pour l'UI
   const [userRating, setUserRating] = useState(0)
   const [userReview, setUserReview] = useState('')
-  
-  const apiKey = import.meta.env.VITE_OMDB_API_KEY
+
+  // Vérifier si ce film est en favori
+  const isFavorite = favorites.some(f => f.imdbID === movieId)
+  const isWatchedList = watched.some(w => w.imdbID === movieId)
+
+  // Vérifier si l'utilisateur a déjà écrit un commentaire pour ce film
+  const userReviewForMovie = reviews.find(r => r.imdbID === movieId && r.userId === user?.id)
+
+  // Sauvegarder les favoris
+  const toggleFavorite = () => {
+    let newFavorites
+    if (isFavorite) {
+      newFavorites = favorites.filter(f => f.imdbID !== movieId)
+    } else {
+      newFavorites = [...favorites, { 
+        imdbID: movieId, 
+        Title: movie?.Title, 
+        Poster: movie?.Poster 
+      }]
+    }
+    localStorage.setItem(FAVORITES_KEY, JSON.stringify(newFavorites))
+    setFavorites(newFavorites)
+  }
+
+  // Sauvegarder les films vus
+  const toggleWatched = () => {
+    let newWatched
+    if (isWatchedList) {
+      newWatched = watched.filter(w => w.imdbID !== movieId)
+    } else {
+      newWatched = [...watched, { 
+        imdbID: movieId, 
+        Title: movie?.Title, 
+        Poster: movie?.Poster,
+        date: new Date().toISOString()
+      }]
+    }
+    localStorage.setItem(WATCHED_KEY, JSON.stringify(newWatched))
+    setWatched(newWatched)
+  }
 
   // Fetch movie details from OMDb API
   const { isPending, error, data: movie } = useQuery({
     queryKey: ['movie', movieId],
     queryFn: async () => {
-      const res = await fetch(`https://www.omdbapi.com/?i=${movieId}&apikey=${apiKey}`)
+      const res = await fetch(`https://www.omdbapi.com/?i=${movieId}&apikey=${apiKey}&plot=full`)
       const data = await res.json()
       if (data.Response === 'False') {
         throw new Error(data.Error || 'Movie not found')
@@ -37,34 +98,67 @@ function FilmDetail() {
     retry: 2,
   })
 
-  // Mock reviews
-  const reviews = [
+  // Mock reviews pour l'exemple (autres utilisateurs)
+  const mockReviews = [
     {
       id: 1,
+      userId: 'other',
       user: "FilmBuff92",
       avatar: "https://placehold.co/40x40/4a4a4a/ffffff?text=FB",
       rating: 5,
       comment: "Incroyable suite ! Denis Villeneuve a surpassé le premier film. Les effets visuels sont époustouflants et l'histoire est captivante du début à la fin.",
-      date: "2024-03-01"
+      date: "2024-03-01",
+      imdbID: movieId
     },
     {
       id: 2,
+      userId: 'other2',
       user: "Cinephile_Paris",
       avatar: "https://placehold.co/40x40/5a5a5a/ffffff?text=CP",
       rating: 4,
       comment: "Une réalisation magistrale. L'adaptation est enfin à la hauteur. L'interprétation est parfaite.",
-      date: "2024-03-02"
+      date: "2024-03-02",
+      imdbID: movieId
     }
   ]
+
+  // Combiner les reviews locales et mock
+  const allReviews = [...(userReviewForMovie ? [userReviewForMovie] : []), ...mockReviews]
 
   const handleRating = (rating) => {
     setUserRating(rating)
   }
 
   const handleSubmitReview = () => {
-    console.log('Avis soumis:', { rating: userRating, review: userReview })
+    if (!userRating || !userReview.trim() || !user) return
+
+    const newReview = {
+      id: Date.now(),
+      userId: user.id,
+      user: user.username,
+      avatar: `https://placehold.co/40x40/00e054/000000?text=${user.username.charAt(0).toUpperCase()}`,
+      rating: userRating,
+      comment: userReview,
+      date: new Date().toISOString().split('T')[0],
+      imdbID: movieId
+    }
+
+    // Sauvegarder dans localStorage
+    const updatedReviews = [...reviews.filter(r => !(r.imdbID === movieId && r.userId === user.id)), newReview]
+    localStorage.setItem(REVIEWS_KEY, JSON.stringify(updatedReviews))
+    setReviews(updatedReviews)
+
+    // Reset form
     setUserReview('')
     setUserRating(0)
+  }
+
+  const handleDeleteReview = () => {
+    if (!user) return
+
+    const updatedReviews = reviews.filter(r => !(r.imdbID === movieId && r.userId === user.id))
+    localStorage.setItem(REVIEWS_KEY, JSON.stringify(updatedReviews))
+    setReviews(updatedReviews)
   }
 
   if (isPending) {
@@ -139,30 +233,30 @@ function FilmDetail() {
                 )}
               </div>
 
-              {/* Action Buttons */}
+              {/* Action Buttons - With persistent state */}
               <div className="space-y-2">
                 <button
-                  onClick={() => setIsFavorite(!isFavorite)}
-                  className={`w-full flex items-center justify-center px-4 py-2 rounded-md transition-all ${
+                  onClick={toggleFavorite}
+                  className={`w-full flex items-center justify-center px-4 py-2.5 rounded-md transition-all ${
                     isFavorite
                       ? 'bg-[#00e054] text-black hover:bg-[#00cc45]'
                       : 'bg-[#1c2228] text-white hover:bg-[#2c3440] border border-[#2c3440]'
                   }`}
                 >
-                  <Heart className={`h-4 w-4 mr-2 ${isFavorite ? 'fill-current' : ''}`} />
-                  {isFavorite ? 'Retirer' : 'Favoris'}
+                  <Heart className={`h-5 w-5 mr-2 ${isFavorite ? 'fill-current' : ''}`} />
+                  {isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
                 </button>
 
                 <button
-                  onClick={() => setIsWatched(!isWatched)}
-                  className={`w-full flex items-center justify-center px-4 py-2 rounded-md transition-all ${
-                    isWatched
+                  onClick={toggleWatched}
+                  className={`w-full flex items-center justify-center px-4 py-2.5 rounded-md transition-all ${
+                    isWatchedList
                       ? 'bg-[#00e054] text-black hover:bg-[#00cc45]'
                       : 'bg-[#1c2228] text-white hover:bg-[#2c3440] border border-[#2c3440]'
                   }`}
                 >
-                  <Eye className={`h-4 w-4 mr-2 ${isWatched ? 'fill-current' : ''}`} />
-                  {isWatched ? 'Vu' : 'À voir'}
+                  <Eye className={`h-5 w-5 mr-2 ${isWatchedList ? 'fill-current' : ''}`} />
+                  {isWatchedList ? 'Marquer comme non vu' : 'Marquer comme vu'}
                 </button>
               </div>
 
@@ -184,7 +278,7 @@ function FilmDetail() {
           <div className="md:col-span-2">
             {/* Title & Year */}
             <div className="mb-6">
-              <h1 className="text-3xl font-semibold mb-2">{movie.Title}</h1>
+              <h1 className="text-3xl md:text-4xl font-semibold mb-2">{movie.Title}</h1>
               <div className="flex flex-wrap items-center gap-4 text-[#9ab] text-sm">
                 {movie.Year && (
                   <span className="flex items-center">
@@ -287,8 +381,8 @@ function FilmDetail() {
             <div className="border-t border-[#2c3440] pt-8">
               <h2 className="text-xl font-semibold mb-6">Avis</h2>
 
-              {/* Write Review */}
-              {user && (
+              {/* Write Review - Only show if user hasn't reviewed yet */}
+              {user && !userReviewForMovie && (
                 <div className="border-b border-[#2c3440] pb-6 mb-6">
                   <h3 className="text-sm font-medium text-[#9ab] mb-4">Écrire un avis</h3>
                   <div className="mb-4">
@@ -327,9 +421,46 @@ function FilmDetail() {
                 </div>
               )}
 
+              {/* User's existing review - with delete option */}
+              {userReviewForMovie && (
+                <div className="border-b border-[#2c3440] pb-6 mb-6 bg-[#1c2228] rounded-md p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={userReviewForMovie.avatar}
+                        alt={userReviewForMovie.user}
+                        className="w-8 h-8 rounded-full"
+                      />
+                      <span className="font-medium text-sm">{userReviewForMovie.user} <span className="text-[#00e054]">(Vous)</span></span>
+                    </div>
+                    <button
+                      onClick={handleDeleteReview}
+                      className="p-2 text-[#9ab] hover:text-red-500 transition-colors"
+                      title="Supprimer mon avis"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <div className="flex mb-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`h-4 w-4 ${
+                          star <= userReviewForMovie.rating
+                            ? 'text-[#00e054] fill-current'
+                            : 'text-[#2c3440]'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-white text-sm">{userReviewForMovie.comment}</p>
+                  <p className="text-[#9ab] text-xs mt-2">{userReviewForMovie.date}</p>
+                </div>
+              )}
+
               {/* Reviews List */}
               <div className="space-y-6">
-                {reviews.map((review) => (
+                {allReviews.filter(r => r.userId !== user?.id || !user).map((review) => (
                   <div key={review.id} className="border-b border-[#2c3440] pb-6 last:border-b-0">
                     <div className="flex items-start gap-3">
                       <img
@@ -354,11 +485,16 @@ function FilmDetail() {
                           </div>
                         </div>
                         <p className="text-[#9ab] text-sm">{review.comment}</p>
+                        {review.date && <p className="text-[#9ab] text-xs mt-2">{review.date}</p>}
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
+
+              {allReviews.length === 0 && (
+                <p className="text-[#9ab] text-center py-4">Aucun avis pour ce film</p>
+              )}
             </div>
           </div>
         </div>
