@@ -2,9 +2,14 @@ import { createRootRoute, Link, Outlet, redirect } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { useState } from 'react'
 import { ThemeContext, AuthContext } from '../contexts'
-import { Film, User, MessageCircle, Home, LogOut, Sun, Moon, Sparkle } from 'lucide-react'
+import { Film, User, MessageCircle, Home, LogOut, Sun, Moon, Sparkle, Search, X } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
 
 const RootLayout = () => {
+  const navigate = useNavigate()
+  const apiKey = import.meta.env.VITE_OMDB_API_KEY
+
   const [isDark, setIsDark] = useState(() => {
     const savedTheme = localStorage.getItem('cineconnect_theme');
     return savedTheme === 'dark';
@@ -14,6 +19,10 @@ const RootLayout = () => {
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
+  // Search states
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+
   const toggleTheme = () => {
     const newTheme = !isDark;
     setIsDark(newTheme);
@@ -21,7 +30,6 @@ const RootLayout = () => {
   };
 
   const login = (email, password) => {
-    // Simulation de connexion
     const savedUsers = localStorage.getItem('cineconnect_users');
     if (savedUsers) {
       const users = JSON.parse(savedUsers);
@@ -37,11 +45,9 @@ const RootLayout = () => {
   };
 
   const register = (username, email, password) => {
-    // Simulation d'inscription
     const savedUsers = localStorage.getItem('cineconnect_users');
     const users = savedUsers ? JSON.parse(savedUsers) : [];
 
-    // Vérifier si l'email existe déjà
     if (users.find((u) => u.email === email)) {
       return false;
     }
@@ -67,6 +73,31 @@ const RootLayout = () => {
     localStorage.removeItem('cineconnect_user');
   };
 
+  // Search function - returns multiple results
+  const { data: searchResults, isLoading: isSearching } = useQuery({
+    queryKey: ['search', searchQuery],
+    queryFn: async () => {
+      if (!searchQuery || searchQuery.length < 2) return []
+      
+      const res = await fetch(
+        `https://www.omdbapi.com/?s=${encodeURIComponent(searchQuery)}&type=movie&page=1&apikey=${apiKey}`
+      )
+      const data = await res.json()
+      
+      if (data.Response === 'True' && data.Search) {
+        return data.Search
+      }
+      return []
+    },
+    enabled: searchQuery.length >= 2,
+  })
+
+  const handleMovieClick = (imdbID) => {
+    setSearchOpen(false)
+    setSearchQuery('')
+    navigate({ to: '/movies/$movieId', params: { movieId: imdbID } })
+  }
+
   const navigation = [
     { name: 'Accueil', href: '/', icon: Home },
     { name: 'Films', href: '/films', icon: Film },
@@ -75,70 +106,185 @@ const RootLayout = () => {
     { name: 'Discussion', href: '/discussion', icon: MessageCircle, requiresAuth: true },
   ]
 
+  // Theme-based classes
+  const bgMain = isDark ? 'bg-[#14181c]' : 'bg-gray-50'
+  const bgCard = isDark ? 'bg-[#1c2228]' : 'bg-white'
+  const borderColor = isDark ? 'border-[#2c3440]' : 'border-gray-200'
+  const textMain = isDark ? 'text-white' : 'text-gray-900'
+  const textSecondary = isDark ? 'text-[#9ab]' : 'text-gray-600'
+  const accentColor = isDark ? 'text-[#00e054]' : 'text-green-600'
+  const accentBg = isDark ? 'bg-[#00e054]' : 'bg-green-600'
+  const hoverBg = isDark ? 'hover:bg-[#1c2228]' : 'hover:bg-gray-100'
+  const inputBg = isDark ? 'bg-[#1c2228]' : 'bg-white'
+
   return (
     <ThemeContext.Provider value={{ isDark, toggleTheme }}>
       <AuthContext.Provider value={{ user, login, register, logout }}>
-        <div className={isDark ? 'dark' : ''}>
-          {/* Desktop Sidebar - Only show if authenticated */}
+        <div className={`min-h-screen ${bgMain} transition-colors duration-300`}>
+          {/* Top Navbar */}
           {user && (
-            <div className={`hidden md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col ${isDark ? 'bg-gray-800' : 'bg-white'} border-r ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-              <div className="flex flex-col flex-grow pt-5 pb-4 overflow-y-auto">
-                <div className="flex items-center flex-shrink-0 px-4">
-                  <Film className="h-8 w-8 text-green-500" />
-                  <span className="ml-2 text-xl font-bold">CinéConnect</span>
-                </div>
-                <div className="mt-8 flex-grow flex flex-col">
-                  <nav className="flex-1 px-2 space-y-1">
+            <nav className={`fixed top-0 left-0 right-0 z-50 ${bgMain} ${borderColor} border-b`}>
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center justify-between h-14">
+                  {/* Logo */}
+                  <div className="flex items-center">
+                    <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
+                      <Film className={`h-6 w-6 ${accentColor}`} />
+                      <span className={`ml-2 text-lg font-semibold ${textMain} tracking-tight`}>CINE CONNECT</span>
+                    </Link>
+                  </div>
+
+                  {/* Desktop Navigation */}
+                  <div className="hidden md:flex items-center space-x-1">
                     {navigation.map((item) => {
                       if (item.requiresAuth && !user) return null
                       return (
                         <Link
                           key={item.name}
                           to={item.href}
-                          className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors ${
-                            window.location.pathname === item.href
-                              ? 'bg-green-500 text-white'
-                              : isDark
-                                ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                          }`}
+                          className={`px-3 py-2 text-sm ${textSecondary} ${accentColor} transition-colors rounded-md ${hoverBg}`}
                         >
-                          <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
                           {item.name}
                         </Link>
                       )
                     })}
-                  </nav>
-                  <div className="px-2 mt-6">
+                  </div>
+
+                  {/* Right Side */}
+                  <div className="flex items-center space-x-3">
+                    {/* Search */}
+                    {searchOpen ? (
+                      <div className="relative">
+                        <div className="flex items-center">
+                          <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${textSecondary}`} />
+                          <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Rechercher un film..."
+                            className={`pl-10 pr-10 py-1.5 ${inputBg} ${borderColor} border rounded-md ${textMain} placeholder:${textSecondary} text-sm focus:outline-none focus:border-[#00e054] w-48 md:w-56`}
+                            autoFocus
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSearchOpen(false)
+                              setSearchQuery('')
+                            }}
+                            className={`absolute right-2 p-1 ${textSecondary} hover:${textMain} transition-colors`}
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+
+                        {/* Search Results Dropdown */}
+                        {searchQuery.length >= 2 && (
+                          <div className={`absolute top-full mt-2 left-0 right-0 ${bgCard} ${borderColor} border rounded-md shadow-lg max-h-80 overflow-y-auto z-50`}>
+                            {isSearching ? (
+                              <div className={`p-4 text-center ${textSecondary}`}>
+                                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-[#00e054] mx-auto"></div>
+                              </div>
+                            ) : searchResults && searchResults.length > 0 ? (
+                              <div className="py-2">
+                                {searchResults.map((movie) => (
+                                  <button
+                                    key={movie.imdbID}
+                                    onClick={() => handleMovieClick(movie.imdbID)}
+                                    className={`w-full flex items-center gap-3 px-3 py-2 ${hoverBg} transition-colors text-left`}
+                                  >
+                                    {movie.Poster && movie.Poster !== 'N/A' ? (
+                                      <img src={movie.Poster} alt={movie.Title} className="w-10 h-14 object-cover rounded" />
+                                    ) : (
+                                      <div className={`w-10 h-14 ${bgCard} ${borderColor} rounded flex items-center justify-center`}>
+                                        <Film className={`h-4 w-4 ${textSecondary}`} />
+                                      </div>
+                                    )}
+                                    <div>
+                                      <p className={`${textMain} text-sm font-medium`}>{movie.Title}</p>
+                                      <p className={`${textSecondary} text-xs`}>{movie.Year}</p>
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className={`p-4 text-center ${textSecondary} text-sm`}>
+                                Aucun résultat trouvé
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <button 
+                        onClick={() => setSearchOpen(true)}
+                        className={`p-2 ${textSecondary} ${accentColor} transition-colors rounded-full ${hoverBg}`}
+                        title="Rechercher"
+                      >
+                        <Search className="h-5 w-5" />
+                      </button>
+                    )}
+
+                    {/* Theme Toggle */}
                     <button
                       onClick={toggleTheme}
-                      className={`w-full group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors ${
-                        isDark
-                          ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                      }`}
+                      className={`p-2 ${textSecondary} ${accentColor} transition-colors rounded-full ${hoverBg}`}
                     >
-                      {isDark ? <Sun className="mr-3 h-5 w-5" /> : <Moon className="mr-3 h-5 w-5" />}
-                      {isDark ? 'Mode clair' : 'Mode sombre'}
+                      {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                     </button>
-                    {user && (
-                      <button
-                        onClick={logout}
-                        className="w-full mt-2 group flex items-center px-2 py-2 text-sm font-medium rounded-md text-red-600 hover:bg-red-50 hover:text-red-900 transition-colors"
-                      >
-                        <LogOut className="mr-3 h-5 w-5" />
-                        Déconnexion
-                      </button>
+
+                    {/* User Profile */}
+                    {user ? (
+                      <div className="flex items-center space-x-3">
+                        <Link
+                          to="/profile"
+                          className={`flex items-center space-x-2 ${hoverBg} px-2 py-1 rounded-full transition-colors`}
+                        >
+                          <div className={`h-8 w-8 rounded-full ${accentBg} flex items-center justify-center`}>
+                            <span className="text-sm font-medium text-black">
+                              {user.username.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                        </Link>
+                        <button
+                          onClick={logout}
+                          className={`p-2 ${textSecondary} hover:text-red-500 transition-colors rounded-full ${hoverBg}`}
+                          title="Déconnexion"
+                        >
+                          <LogOut className="h-5 w-5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2">
+                        <Link
+                          to="/login"
+                          className={`px-3 py-1.5 text-sm ${textSecondary} ${accentColor} transition-colors`}
+                        >
+                          Connexion
+                        </Link>
+                        <Link
+                          to="/register"
+                          className={`px-3 py-1.5 text-sm ${accentBg} text-black font-medium rounded-full hover:opacity-90 transition-colors`}
+                        >
+                          Inscription
+                        </Link>
+                      </div>
                     )}
                   </div>
                 </div>
               </div>
-            </div>
+            </nav>
           )}
 
-          {/* Mobile Navigation - Only show if authenticated */}
+          {/* Main Content */}
+          <div className={user ? "pt-14" : ""}>
+            <main>
+              <Outlet />
+            </main>
+          </div>
+
+          {/* Mobile Bottom Navigation */}
           {user && (
-            <div className={`md:hidden fixed bottom-0 left-0 right-0 z-50 ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-t`}>
+            <div className={`md:hidden fixed bottom-0 left-0 right-0 z-50 ${bgMain} ${borderColor} border-t`}>
               <div className="flex">
                 {navigation.map((item) => {
                   if (item.requiresAuth && !user) return null
@@ -146,13 +292,7 @@ const RootLayout = () => {
                     <Link
                       key={item.name}
                       to={item.href}
-                      className={`flex-1 flex flex-col items-center justify-center py-2 px-1 text-xs transition-colors ${
-                        window.location.pathname === item.href
-                          ? 'text-green-500'
-                          : isDark
-                            ? 'text-gray-400 hover:text-white'
-                            : 'text-gray-600 hover:text-gray-900'
-                      }`}
+                      className={`flex-1 flex flex-col items-center justify-center py-2 px-1 text-xs ${textSecondary} ${accentColor} transition-colors`}
                     >
                       <item.icon className="h-5 w-5 mb-1" />
                       {item.name}
@@ -162,13 +302,6 @@ const RootLayout = () => {
               </div>
             </div>
           )}
-
-          {/* Main content */}
-          <div className={user ? "md:pl-64" : ""}>
-            <main className={user ? "pb-16 md:pb-0" : ""}>
-              <Outlet />
-            </main>
-          </div>
 
           <TanStackRouterDevtools />
         </div>
@@ -180,12 +313,10 @@ const RootLayout = () => {
 export const Route = createRootRoute({
   component: RootLayout,
   beforeLoad: ({ location }) => {
-    // Don't redirect for login and register pages
     if (location.pathname === '/login' || location.pathname === '/register') {
       return
     }
 
-    // Redirect to login if not authenticated
     const user = localStorage.getItem('cineconnect_user')
     if (!user) {
       throw redirect({

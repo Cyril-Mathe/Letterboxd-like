@@ -1,228 +1,241 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useContext, useState, useMemo } from 'react'
-import { Link } from '@tanstack/react-router'
+import { useContext, useState } from 'react'
 import { ThemeContext } from '../contexts'
-import { Search, Star, Film, Filter } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { Search, Play } from 'lucide-react'
+import { Link } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/films')({
   component: Films,
 })
 
+// Movie Card Component
+function MovieCard({ movie, isDark }) {
+  const title = movie.Title || movie.title
+  const poster = movie.Poster || movie.poster
+  const rating = movie.imdbRating || movie.rating
+  const year = movie.Year || movie.year
+  const id = movie.imdbID || movie.id
+
+  if (!poster || poster === 'N/A') return null
+
+  return (
+    <Link to="/movies/$movieId" params={{ movieId: id }} className="block group flex-shrink-0 w-[140px] sm:w-[160px] md:w-[180px]">
+      <div className="bg-[#1c2228] rounded-md overflow-hidden transition-all duration-200 hover:shadow-lg hover:ring-1 hover:ring-[#00e054] hover:scale-105 cursor-pointer">
+        <div className="relative aspect-[2/3] overflow-hidden">
+          <img 
+            src={poster} 
+            alt={title} 
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+            loading="lazy"
+          />
+          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-[#00e054] flex items-center justify-center">
+              <Play className="h-6 w-6 text-black ml-1" fill="currentColor" />
+            </div>
+          </div>
+          {rating && rating !== 'N/A' && (
+            <div className="absolute top-2 right-2 bg-black/75 text-white px-2 py-0.5 rounded text-xs font-medium flex items-center">
+              <span className="text-yellow-400 mr-1">★</span>
+              {rating}
+            </div>
+          )}
+        </div>
+        
+        <div className="p-2">
+          <h3 className="font-medium text-xs mb-1 line-clamp-2 text-white group-hover:text-[#00e054] transition-colors">
+            {title}
+          </h3>
+          <div className="flex items-center justify-between text-xs text-[#9ab]">
+            <span>{year}</span>
+          </div>
+        </div>
+      </div>
+    </Link>
+  )
+}
+
+// Skeleton loading
+function MovieCardSkeleton() {
+  return (
+    <div className="bg-[#1c2228] rounded-md overflow-hidden animate-pulse flex-shrink-0 w-[140px] sm:w-[160px] md:w-[180px]">
+      <div className="aspect-[2/3] bg-[#2c3440]" />
+      <div className="p-2">
+        <div className="h-3 bg-[#2c3440] rounded mb-2" />
+        <div className="h-2 bg-[#2c3440] rounded w-1/2" />
+      </div>
+    </div>
+  )
+}
+
+// Horizontal Movie Section Component
+function MovieSection({ title, searchTerm, apiKey, isDark, page = 1 }) {
+  const { data: movies, isLoading, error } = useQuery({
+    queryKey: ['movies', searchTerm, page],
+    queryFn: async () => {
+      const res = await fetch(`https://www.omdbapi.com/?s=${searchTerm}&type=movie&page=${page}&apikey=${apiKey}`)
+      const data = await res.json()
+      if (data.Response === 'True' && data.Search) {
+        return data.Search
+      }
+      return []
+    },
+    staleTime: 1000 * 60 * 30,
+  })
+
+  const textMain = isDark ? 'text-white' : 'text-gray-900'
+
+  if (isLoading) {
+    return (
+      <div className="mb-8">
+        <h2 className={`text-lg font-medium mb-4 ${textMain}`}>{title}</h2>
+        <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-4 -mx-4 px-4">
+          {[...Array(8)].map((_, i) => (
+            <MovieCardSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !movies || movies.length === 0) return null
+
+  return (
+    <div className="mb-8">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className={`text-lg font-medium ${textMain}`}>{title}</h2>
+      </div>
+      <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-4 -mx-4 px-4">
+        {movies.map((movie) => (
+          <MovieCard key={movie.imdbID} movie={movie} isDark={isDark} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function Films() {
   const { isDark } = useContext(ThemeContext)
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedGenre, setSelectedGenre] = useState('Tous')
+  
+  const apiKey = import.meta.env.VITE_OMDB_API_KEY
+  
+  const bgMain = isDark ? 'bg-[#14181c]' : 'bg-gray-50'
+  const borderColor = isDark ? 'border-[#2c3440]' : 'border-gray-200'
+  const textMain = isDark ? 'text-white' : 'text-gray-900'
+  const textSecondary = isDark ? 'text-[#9ab]' : 'text-gray-600'
+  const inputBg = isDark ? 'bg-[#1c2228]' : 'bg-white'
 
-  // Données simulées de films
-  const movies = [
-    {
-      id: 1,
-      title: "Dune: Part Two",
-      poster: "https://via.placeholder.com/300x450/1a1a1a/ffffff?text=Dune+2",
-      rating: 4.2,
-      year: 2024,
-      genre: "Science-Fiction",
-      duration: "166 min",
-      synopsis: "Paul Atreides s'unit à Chani et aux Fremen pour prendre sa revanche contre ceux qui ont détruit sa famille."
-    },
-    {
-      id: 2,
-      title: "Oppenheimer",
-      poster: "https://via.placeholder.com/300x450/2a2a2a/ffffff?text=Oppenheimer",
-      rating: 4.5,
-      year: 2023,
-      genre: "Drame",
-      duration: "180 min",
-      synopsis: "L'histoire du scientifique américain J. Robert Oppenheimer et son rôle dans le développement de la bombe atomique."
-    },
-    {
-      id: 3,
-      title: "The Batman",
-      poster: "https://via.placeholder.com/300x450/3a3a3a/ffffff?text=Batman",
-      rating: 4.0,
-      year: 2022,
-      genre: "Action",
-      duration: "176 min",
-      synopsis: "Batman est forcé de sortir de l'ombre pour traquer le Riddler, un tueur en série qui sème le chaos à Gotham."
-    },
-    {
-      id: 4,
-      title: "Parasite",
-      poster: "https://via.placeholder.com/300x450/4a4a4a/ffffff?text=Parasite",
-      rating: 4.6,
-      year: 2019,
-      genre: "Thriller",
-      duration: "132 min",
-      synopsis: "Une famille pauvre s'infiltre dans la vie d'une famille riche en se faisant passer pour des domestiques qualifiés."
-    },
-    {
-      id: 5,
-      title: "Everything Everywhere All at Once",
-      poster: "https://via.placeholder.com/300x450/5a5a5a/ffffff?text=EEAAO",
-      rating: 4.4,
-      year: 2022,
-      genre: "Science-Fiction",
-      duration: "139 min",
-      synopsis: "Une femme chinoise-américaine doit connecter avec des versions parallèles d'elle-même pour prévenir une catastrophe puissante."
-    },
-    {
-      id: 6,
-      title: "The Holdovers",
-      poster: "https://via.placeholder.com/300x450/6a6a6a/ffffff?text=Holdovers",
-      rating: 4.1,
-      year: 2023,
-      genre: "Drame",
-      duration: "133 min",
-      synopsis: "Un professeur grincheux est chargé de surveiller un groupe d'étudiants pendant les vacances de Noël."
-    },
-    {
-      id: 7,
-      title: "Poor Things",
-      poster: "https://via.placeholder.com/300x450/7a7a7a/ffffff?text=Poor+Things",
-      rating: 4.3,
-      year: 2023,
-      genre: "Comédie",
-      duration: "141 min",
-      synopsis: "L'histoire extraordinaire de Bella Baxter, une jeune femme au passé mystérieux qui vit une aventure extraordinaire."
-    },
-    {
-      id: 8,
-      title: "Killers of the Flower Moon",
-      poster: "https://via.placeholder.com/300x450/8a8a8a/ffffff?text=KOTFM",
-      rating: 4.2,
-      year: 2023,
-      genre: "Drame",
-      duration: "206 min",
-      synopsis: "L'histoire vraie d'une série de meurtres racistes dans les années 1920 contre les Osages dans l'Oklahoma."
-    },
-    {
-      id: 9,
-      title: "Anatomy of a Fall",
-      poster: "https://via.placeholder.com/300x450/9a9a9a/ffffff?text=Anatomy",
-      rating: 4.0,
-      year: 2023,
-      genre: "Thriller",
-      duration: "151 min",
-      synopsis: "Une femme est accusée du meurtre de son mari, un écrivain célèbre, et doit se défendre seule au tribunal."
-    },
-    {
-      id: 10,
-      title: "The Zone of Interest",
-      poster: "https://via.placeholder.com/300x450/101010/ffffff?text=Zone+of+Interest",
-      rating: 3.8,
-      year: 2023,
-      genre: "Drame",
-      duration: "105 min",
-      synopsis: "L'histoire de Rudolf Höss, commandant d'Auschwitz, et de sa famille vivant à côté du camp de concentration."
-    }
+  // Plus de catégories de films via API OMDB
+  const categories = [
+    { title: 'Films Populaires', search: 'popular movie', page: 1 },
+    { title: 'Meilleurs Films', search: 'best movie', page: 1 },
+    { title: 'Films d\'Action', search: 'action', page: 1 },
+    { title: 'Science-Fiction', search: 'sci-fi', page: 1 },
+    { title: 'Thrillers', search: 'thriller', page: 1 },
+    { title: 'Comédies', search: 'comedy', page: 1 },
+    { title: 'Drames', search: 'drama', page: 1 },
+    { title: 'Horreur', search: 'horror', page: 1 },
+    { title: 'Aventure', search: 'adventure', page: 1 },
+    { title: 'Romance', search: 'romance', page: 1 },
+    { title: 'Animation', search: 'animation', page: 1 },
+    { title: 'Documentaire', search: 'documentary', page: 1 },
+    { title: 'Fantasy', search: 'fantasy', page: 1 },
+    { title: 'Policier', search: 'crime', page: 1 },
+    { title: 'Musical', search: 'musical', page: 1 },
+    { title: 'Guerre', search: 'war', page: 1 },
+    { title: 'Western', search: 'western', page: 1 },
+    { title: 'Biopic', search: 'biography', page: 1 },
+    { title: 'Sport', search: 'sport', page: 1 },
+    { title: 'Mystère', search: 'mystery', page: 1 },
   ]
 
-  const genres = ['Tous', 'Action', 'Drame', 'Science-Fiction', 'Thriller', 'Comédie']
-
-  // Filtrage des films
-  const filteredMovies = useMemo(() => {
-    return movies.filter(movie => {
-      const matchesSearch = movie.title.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchesGenre = selectedGenre === 'Tous' || movie.genre === selectedGenre
-      return matchesSearch && matchesGenre
-    })
-  }, [searchTerm, selectedGenre])
+  // Recherche de films
+  const { data: searchResults, isLoading: isSearching } = useQuery({
+    queryKey: ['search', searchTerm],
+    queryFn: async () => {
+      if (!searchTerm || searchTerm.length < 2) return []
+      const res = await fetch(`https://www.omdbapi.com/?s=${encodeURIComponent(searchTerm)}&type=movie&page=1&apikey=${apiKey}`)
+      const data = await res.json()
+      if (data.Response === 'True' && data.Search) {
+        return data.Search.slice(0, 30)
+      }
+      return []
+    },
+    enabled: searchTerm.length >= 2,
+  })
 
   return (
-    <div className={`min-h-screen ${isDark ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
-      {/* Header avec recherche et filtres */}
-      <div className={`sticky top-0 z-50 ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b shadow-sm`}>
+    <div className={`min-h-screen ${bgMain} ${textMain} transition-colors duration-300`}>
+      {/* Header */}
+      <header className={`${bgMain} ${borderColor} border-b sticky top-0 z-40`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <h1 className="text-2xl font-bold flex items-center">
-              <Film className="h-6 w-6 mr-2 text-green-500" />
-              Films
-            </h1>
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight">
+                Films
+              </h1>
+              <p className={`text-sm ${textSecondary}`}>
+                Découvrez les meilleurs films
+              </p>
+            </div>
 
-            {/* Barre de recherche */}
-            <div className="flex-1 max-w-md">
+            <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${textSecondary}`} />
                 <input
                   type="text"
                   placeholder="Rechercher un film..."
-                  className={`w-full pl-10 pr-4 py-2 rounded-lg border ${
-                    isDark
-                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
-                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                  } focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent`}
+                  className={`w-full sm:w-64 pl-10 pr-4 py-2 ${inputBg} ${borderColor} rounded-md ${textMain} placeholder:${textSecondary} focus:outline-none focus:ring-1 focus:ring-[#00e054] focus:border-[#00e054] transition-colors`}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
             </div>
+          </div>
+        </div>
+      </header>
 
-            {/* Filtres par genre */}
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-gray-500" />
-              <select
-                value={selectedGenre}
-                onChange={(e) => setSelectedGenre(e.target.value)}
-                className={`px-3 py-2 rounded-lg border ${
-                  isDark
-                    ? 'bg-gray-700 border-gray-600 text-white'
-                    : 'bg-white border-gray-300 text-gray-900'
-                } focus:outline-none focus:ring-2 focus:ring-green-500`}
-              >
-                {genres.map(genre => (
-                  <option key={genre} value={genre}>{genre}</option>
+      {/* Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {searchTerm && searchTerm.length >= 2 ? (
+          // Search Results
+          <div>
+            <h2 className={`text-xl font-medium mb-6`}>
+              Résultats pour "{searchTerm}"
+            </h2>
+            {isSearching ? (
+              <div className="flex flex-wrap gap-4">
+                {[...Array(12)].map((_, i) => (
+                  <MovieCardSkeleton key={i} />
                 ))}
-              </select>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Grille de films */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-          {filteredMovies.map((movie) => (
-            <Link
-              key={movie.id}
-              to={`/film/${movie.id}`}
-              className={`rounded-lg overflow-hidden shadow-md ${
-                isDark ? 'bg-gray-800' : 'bg-white'
-              } hover:shadow-xl transition-all duration-300 transform hover:scale-105`}
-            >
-              <div className="relative">
-                <img
-                  src={movie.poster}
-                  alt={movie.title}
-                  className="w-full h-64 object-cover"
-                />
-                <div className="absolute top-2 right-2 bg-black bg-opacity-75 text-white px-2 py-1 rounded text-sm font-medium">
-                  {movie.rating}
-                  <Star className="inline h-3 w-3 ml-1 fill-current text-yellow-400" />
-                </div>
               </div>
-              <div className="p-4">
-                <h3 className="font-bold text-sm mb-1 line-clamp-2">{movie.title}</h3>
-                <div className="flex items-center justify-between text-xs text-gray-500">
-                  <span>{movie.year}</span>
-                  <span>{movie.genre}</span>
-                </div>
+            ) : searchResults && searchResults.length > 0 ? (
+              <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
+                {searchResults.map((movie) => (
+                  <MovieCard key={movie.imdbID} movie={movie} isDark={isDark} />
+                ))}
               </div>
-            </Link>
-          ))}
-        </div>
-
-        {filteredMovies.length === 0 && (
-          <div className="text-center py-12">
-            <Film className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className={`text-lg ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-              Aucun film trouvé
-            </p>
-            <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
-              Essayez de modifier vos critères de recherche
-            </p>
+            ) : (
+              <div className="text-center py-16">
+                <p className={`${textSecondary} text-lg`}>Aucun film trouvé</p>
+              </div>
+            )}
           </div>
+        ) : (
+          // Catégories - fetch from API
+          categories.map((category, index) => (
+            <MovieSection 
+              key={index} 
+              title={category.title} 
+              searchTerm={category.search}
+              apiKey={apiKey}
+              isDark={isDark}
+              page={category.page}
+            />
+          ))
         )}
-      </div>
+      </main>
     </div>
   )
 }

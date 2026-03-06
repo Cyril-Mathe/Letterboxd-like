@@ -1,188 +1,403 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useContext, useState } from 'react'
 import { Link } from '@tanstack/react-router'
-import { ThemeContext, AuthContext } from '../../contexts'
-import { Star, Heart, Eye, MessageCircle, ArrowLeft, Calendar, Clock, Film } from 'lucide-react'
-import MovieDetail from '../../movieDetail'
+import { useQuery } from '@tanstack/react-query'
+import { AuthContext, ThemeContext } from '../../contexts'
+import { Star, Heart, Eye, ArrowLeft, Calendar, Clock, Film, Users, Trash2 } from 'lucide-react'
+import { MovieCardSkeleton } from '../../components/MovieCard'
 
 export const Route = createFileRoute('/movies/$movieId')({
   component: FilmDetail,
 })
 
+// Clés localStorage
+const FAVORITES_KEY = 'cineconnect_favorites'
+const WATCHED_KEY = 'cineconnect_watched'
+const REVIEWS_KEY = 'cineconnect_reviews'
+
 function FilmDetail() {
   const { movieId } = Route.useParams()
-  const { isDark } = useContext(ThemeContext)
-  const { user } = useContext(AuthContext)
-  const [isFavorite, setIsFavorite] = useState(false)
-  const [isWatched, setIsWatched] = useState(false)
+  const { user } = useContext(AuthContext) || { user: null }
+  const { isDark } = useContext(ThemeContext) || { isDark: true }
+  const apiKey = import.meta.env.VITE_OMDB_API_KEY
+
+  // Dynamic theme colors
+  const bgMain = isDark ? 'bg-[#14181c]' : 'bg-gray-100'
+  const bgCard = isDark ? 'bg-[#1c2228]' : 'bg-white'
+  const borderColor = isDark ? 'border-[#2c3440]' : 'border-gray-200'
+  const textMain = isDark ? 'text-white' : 'text-gray-900'
+  const textSecondary = isDark ? 'text-[#9ab]' : 'text-gray-600'
+  const accentColor = isDark ? 'text-[#00e054]' : 'text-green-600'
+  const accentBg = isDark ? 'bg-[#00e054]' : 'bg-green-600'
+  const inputBg = isDark ? 'bg-[#1c2228]' : 'bg-gray-50'
+  const hoverBg = isDark ? 'hover:bg-[#2c3440]' : 'hover:bg-gray-100'
+
+  // Charger les favoris depuis localStorage
+  const [favorites, setFavorites] = useState(() => {
+    const saved = localStorage.getItem(FAVORITES_KEY)
+    return saved ? JSON.parse(saved) : []
+  })
+
+  // Charger les films vus depuis localStorage
+  const [watched, setWatched] = useState(() => {
+    const saved = localStorage.getItem(WATCHED_KEY)
+    return saved ? JSON.parse(saved) : []
+  })
+
+  // Charger les reviews depuis localStorage
+  const [reviews, setReviews] = useState(() => {
+    const saved = localStorage.getItem(REVIEWS_KEY)
+    return saved ? JSON.parse(saved) : []
+  })
+
+  // État local pour l'UI
   const [userRating, setUserRating] = useState(0)
   const [userReview, setUserReview] = useState('')
 
-  // Données simulées du film (normalement récupérées depuis une API)
-  const movie = {
-    id: movieId,
-    title: "Dune: Part Two",
-    poster: "https://via.placeholder.com/600x900/1a1a1a/ffffff?text=Dune+2",
-    backdrop: "https://via.placeholder.com/1200x600/2a2a2a/ffffff?text=Dune+Backdrop",
-    rating: 4.2,
-    year: 2024,
-    genre: ["Science-Fiction", "Action", "Drame"],
-    duration: "166 min",
-    director: "Denis Villeneuve",
-    synopsis: "Paul Atreides s'unit à Chani et aux Fremen pour prendre sa revanche contre ceux qui ont détruit sa famille. Confronté à un choix entre l'amour de sa vie et le destin de l'univers connu, il doit se rendre sur la planète interdite d'Arrakis où il mettra en œuvre sa vengeance la plus impitoyable.",
-    cast: ["Timothée Chalamet", "Zendaya", "Rebecca Ferguson", "Oscar Isaac", "Jason Momoa"],
-    reviews: [
-      {
-        id: 1,
-        user: "FilmBuff92",
-        avatar: "https://via.placeholder.com/40x40/4a4a4a/ffffff?text=FB",
-        rating: 5,
-        comment: "Incroyable suite ! Denis Villeneuve a surpassé le premier film. Les effets visuels sont époustouflants et l'histoire est captivante du début à la fin.",
-        date: "2024-03-01"
-      },
-      {
-        id: 2,
-        user: "Cinephile_Paris",
-        avatar: "https://via.placeholder.com/40x40/5a5a5a/ffffff?text=CP",
-        rating: 4,
-        comment: "Une réalisation magistrale. L'adaptation de Dune est enfin à la hauteur du livre. Timothée Chalamet est parfait dans le rôle de Paul.",
-        date: "2024-03-02"
-      },
-      {
-        id: 3,
-        user: "MovieLover",
-        avatar: "https://via.placeholder.com/40x40/6a6a4a/ffffff?text=ML",
-        rating: 4,
-        comment: "Visuellement superbe, mais l'histoire pourrait être plus accessible pour les néophytes. Les scènes d'action sont mémorables.",
-        date: "2024-03-03"
-      }
-    ]
+  // Vérifier si ce film est en favori
+  const isFavorite = favorites.some(f => f.imdbID === movieId)
+  const isWatchedList = watched.some(w => w.imdbID === movieId)
+
+  // Vérifier si l'utilisateur a déjà écrit un commentaire pour ce film
+  const userReviewForMovie = reviews.find(r => r.imdbID === movieId && r.userId === user?.id)
+
+  // Sauvegarder les favoris
+  const toggleFavorite = () => {
+    let newFavorites
+    if (isFavorite) {
+      newFavorites = favorites.filter(f => f.imdbID !== movieId)
+    } else {
+      newFavorites = [...favorites, { 
+        imdbID: movieId, 
+        Title: movie?.Title, 
+        Poster: movie?.Poster 
+      }]
+    }
+    localStorage.setItem(FAVORITES_KEY, JSON.stringify(newFavorites))
+    setFavorites(newFavorites)
   }
+
+  // Sauvegarder les films vus
+  const toggleWatched = () => {
+    let newWatched
+    if (isWatchedList) {
+      newWatched = watched.filter(w => w.imdbID !== movieId)
+    } else {
+      newWatched = [...watched, { 
+        imdbID: movieId, 
+        Title: movie?.Title, 
+        Poster: movie?.Poster,
+        date: new Date().toISOString()
+      }]
+    }
+    localStorage.setItem(WATCHED_KEY, JSON.stringify(newWatched))
+    setWatched(newWatched)
+  }
+
+  // Fetch movie details from OMDb API
+  const { isPending, error, data: movie } = useQuery({
+    queryKey: ['movie', movieId],
+    queryFn: async () => {
+      const res = await fetch(`https://www.omdbapi.com/?i=${movieId}&apikey=${apiKey}&plot=full`)
+      const data = await res.json()
+      if (data.Response === 'False') {
+        throw new Error(data.Error || 'Movie not found')
+      }
+      return data
+    },
+    staleTime: 1000 * 60 * 30,
+    retry: 2,
+  })
+
+  // Mock reviews pour l'exemple (autres utilisateurs)
+  const mockReviews = [
+    {
+      id: 1,
+      userId: 'other',
+      user: "FilmBuff92",
+      avatar: "https://placehold.co/40x40/4a4a4a/ffffff?text=FB",
+      rating: 5,
+      comment: "Incroyable suite ! Denis Villeneuve a surpassé le premier film. Les effets visuels sont époustouflants et l'histoire est captivante du début à la fin.",
+      date: "2024-03-01",
+      imdbID: movieId
+    },
+    {
+      id: 2,
+      userId: 'other2',
+      user: "Cinephile_Paris",
+      avatar: "https://placehold.co/40x40/5a5a5a/ffffff?text=CP",
+      rating: 4,
+      comment: "Une réalisation magistrale. L'adaptation est enfin à la hauteur. L'interprétation est parfaite.",
+      date: "2024-03-02",
+      imdbID: movieId
+    }
+  ]
+
+  // Combiner les reviews locales et mock
+  const allReviews = [...(userReviewForMovie ? [userReviewForMovie] : []), ...mockReviews]
 
   const handleRating = (rating) => {
     setUserRating(rating)
   }
 
   const handleSubmitReview = () => {
-    // Simulation d'ajout d'avis
-    console.log('Avis soumis:', { rating: userRating, review: userReview })
+    if (!userRating || !userReview.trim() || !user) return
+
+    const newReview = {
+      id: Date.now(),
+      userId: user.id,
+      user: user.username,
+      avatar: `https://placehold.co/40x40/00e054/000000?text=${user.username.charAt(0).toUpperCase()}`,
+      rating: userRating,
+      comment: userReview,
+      date: new Date().toISOString().split('T')[0],
+      imdbID: movieId
+    }
+
+    // Sauvegarder dans localStorage
+    const updatedReviews = [...reviews.filter(r => !(r.imdbID === movieId && r.userId === user.id)), newReview]
+    localStorage.setItem(REVIEWS_KEY, JSON.stringify(updatedReviews))
+    setReviews(updatedReviews)
+
+    // Reset form
     setUserReview('')
     setUserRating(0)
   }
 
+  const handleDeleteReview = () => {
+    if (!user) return
+
+    const updatedReviews = reviews.filter(r => !(r.imdbID === movieId && r.userId === user.id))
+    localStorage.setItem(REVIEWS_KEY, JSON.stringify(updatedReviews))
+    setReviews(updatedReviews)
+  }
+
+  if (isPending) {
+    return (
+      <div className={`min-h-screen ${bgMain} ${textMain}`}>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <Link to="/films" className={`inline-flex items-center ${textSecondary} hover:${accentColor} transition-colors`}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Retour aux films
+          </Link>
+        </div>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+              <MovieCardSkeleton isDark={isDark} />
+            </div>
+          </div>
+        </div>
+        <div className="flex justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#00e054]"></div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className={`min-h-screen ${bgMain} ${textMain}`}>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <Link to="/films" className={`inline-flex items-center ${textSecondary} hover:${accentColor} transition-colors`}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Retour aux films
+          </Link>
+        </div>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <p className="text-red-500">Erreur: {error.message}</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Parse genre array
+  const genres = movie.Genre ? movie.Genre.split(', ') : []
+
   return (
-    <div className={`min-h-screen ${isDark ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
-      {/* Bouton retour */}
-      <div className="sticky top-0 z-50 bg-black bg-opacity-75 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <Link
-            to="/films"
-            className="inline-flex items-center text-white hover:text-green-400 transition-colors"
-          >
+    <div className={`min-h-screen ${bgMain} ${textMain} transition-colors duration-300`}>
+      {/* Header */}
+      <div className={`${borderColor} border-b`}>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <Link to="/films" className={`inline-flex items-center ${textSecondary} hover:${accentColor} transition-colors text-sm`}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Retour aux films
           </Link>
         </div>
       </div>
 
-      {/* Bannière du film */}
-      <div className="relative">
-        <img
-          src={movie.backdrop}
-          alt={movie.title}
-          className="w-full h-64 md:h-96 object-cover"
-        />
-        <div className="absolute inset-0 bg-black bg-opacity-50" />
-        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex flex-col md:flex-row gap-6 items-end">
-              <img
-                src={movie.poster}
-                alt={movie.title}
-                className="w-32 md:w-48 rounded-lg shadow-2xl"
-              />
-              <div className="flex-1">
-                <h1 className="text-3xl md:text-5xl font-bold text-white mb-2">{movie.title}</h1>
-                <div className="flex flex-wrap items-center gap-4 text-white text-sm md:text-base mb-4">
-                  <span className="flex items-center">
-                    <Calendar className="h-4 w-4 mr-1" />
-                    {movie.year}
-                  </span>
-                  <span className="flex items-center">
-                    <Clock className="h-4 w-4 mr-1" />
-                    {movie.duration}
-                  </span>
-                  <div className="flex items-center">
-                    <Star className="h-4 w-4 mr-1 fill-current text-yellow-400" />
-                    <span className="font-medium">{movie.rating}</span>
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {movie.genre.map((g, index) => (
-                    <span
-                      key={index}
-                      className="px-3 py-1 bg-green-500 text-white text-sm rounded-full"
-                    >
-                      {g}
-                    </span>
-                  ))}
-                </div>
+      {/* Main Content - 2 Column Layout */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          
+          {/* Left Column - Poster & Actions */}
+          <div className="md:col-span-1">
+            <div className="sticky top-24">
+              {/* Poster */}
+              <div className={`${bgCard} rounded-md overflow-hidden mb-4`}>
+                {movie.Poster && movie.Poster !== 'N/A' && (
+                  <img
+                    src={movie.Poster}
+                    alt={movie.Title}
+                    className="w-full aspect-[2/3] object-cover"
+                  />
+                )}
               </div>
+
+              {/* Action Buttons */}
+              <div className="space-y-2">
+                <button
+                  onClick={toggleFavorite}
+                  className={`w-full flex items-center justify-center px-4 py-2.5 rounded-md transition-all ${
+                    isFavorite
+                      ? `${accentBg} text-black hover:opacity-90`
+                      : `${bgCard} ${textMain} ${hoverBg} border ${borderColor}`
+                  }`}
+                >
+                  <Heart className={`h-5 w-5 mr-2 ${isFavorite ? 'fill-current' : ''}`} />
+                  {isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                </button>
+
+                <button
+                  onClick={toggleWatched}
+                  className={`w-full flex items-center justify-center px-4 py-2.5 rounded-md transition-all ${
+                    isWatchedList
+                      ? `${accentBg} text-black hover:opacity-90`
+                      : `${bgCard} ${textMain} ${hoverBg} border ${borderColor}`
+                  }`}
+                >
+                  <Eye className={`h-5 w-5 mr-2 ${isWatchedList ? 'fill-current' : ''}`} />
+                  {isWatchedList ? 'Marquer comme non vu' : 'Marquer comme vu'}
+                </button>
+              </div>
+
+              {/* Rating Display */}
+              {movie.imdbRating && movie.imdbRating !== 'N/A' && (
+                <div className={`${bgCard} rounded-md p-4 mt-4`}>
+                  <div className="flex items-center justify-center">
+                    <Star className={`h-5 w-5 ${accentColor} fill-current mr-2`} />
+                    <span className="text-2xl font-bold">{movie.imdbRating}</span>
+                    <span className={`${textSecondary} text-sm ml-1`}>/10</span>
+                  </div>
+                  <p className={`${textSecondary} text-xs text-center mt-1`}>{movie.imdbVotes} votes</p>
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      </div>
 
-      <MovieDetail />
+          {/* Right Column - Details */}
+          <div className="md:col-span-2">
+            {/* Title & Year */}
+            <div className="mb-6">
+              <h1 className="text-3xl md:text-4xl font-semibold mb-2">{movie.Title}</h1>
+              <div className={`flex flex-wrap items-center gap-4 ${textSecondary} text-sm`}>
+                {movie.Year && (
+                  <span className="flex items-center">
+                    <Calendar className="h-4 w-4 mr-1" />
+                    {movie.Year}
+                  </span>
+                )}
+                {movie.Runtime && movie.Runtime !== 'N/A' && (
+                  <span className="flex items-center">
+                    <Clock className="h-4 w-4 mr-1" />
+                    {movie.Runtime}
+                  </span>
+                )}
+              </div>
+            </div>
 
-      {/* Contenu principal */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Informations et actions */}
-          <div className="lg:col-span-2">
+            {/* Genres */}
+            {genres.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-6">
+                {genres.map((g, index) => (
+                  <span
+                    key={index}
+                    className={`px-3 py-1 ${bgCard} ${textSecondary} text-sm rounded-md hover:${accentColor} border border-transparent hover:border-current transition-colors cursor-pointer`}
+                  >
+                    {g}
+                  </span>
+                ))}
+              </div>
+            )}
+
             {/* Synopsis */}
-            <div className={`rounded-lg p-6 mb-8 ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-lg`}>
-              <h2 className="text-2xl font-bold mb-4">Synopsis</h2>
-              <p className={`text-lg leading-relaxed ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                {movie.synopsis}
-              </p>
-            </div>
-
-            {/* Distribution */}
-            <div className={`rounded-lg p-6 mb-8 ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-lg`}>
-              <h2 className="text-2xl font-bold mb-4">Distribution</h2>
-              <div className="mb-4">
-                <h3 className="font-semibold text-lg mb-2">Réalisateur</h3>
-                <p className={`${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{movie.director}</p>
+            {movie.Plot && movie.Plot !== 'N/A' && (
+              <div className="mb-6">
+                <h2 className={`text-lg font-semibold mb-3 ${textSecondary}`}>Synopsis</h2>
+                <p className={`${textMain} leading-relaxed`}>
+                  {movie.Plot}
+                </p>
               </div>
-              <div>
-                <h3 className="font-semibold text-lg mb-2">Acteurs principaux</h3>
-                <div className="flex flex-wrap gap-2">
-                  {movie.cast.map((actor, index) => (
-                    <span
-                      key={index}
-                      className={`px-3 py-1 rounded-full text-sm ${
-                        isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
-                      }`}
-                    >
-                      {actor}
-                    </span>
-                  ))}
+            )}
+
+            {/* Director */}
+            {movie.Director && movie.Director !== 'N/A' && (
+              <div className="mb-6">
+                <h2 className={`text-lg font-semibold mb-2 flex items-center ${textSecondary}`}>
+                  <Film className="h-4 w-4 mr-2" />
+                  Réalisateur
+                </h2>
+                <p className={textMain}>{movie.Director}</p>
+              </div>
+            )}
+
+            {/* Cast */}
+            {movie.Actors && movie.Actors !== 'N/A' && (
+              <div className="mb-6">
+                <h2 className={`text-lg font-semibold mb-2 flex items-center ${textSecondary}`}>
+                  <Users className="h-4 w-4 mr-2" />
+                  Acteurs
+                </h2>
+                <p className={textMain}>{movie.Actors}</p>
+              </div>
+            )}
+
+            {/* Additional Info Grid */}
+            <div className="grid grid-cols-2 gap-4 mb-8">
+              {movie.Rated && movie.Rated !== 'N/A' && (
+                <div className={`${bgCard} rounded-md p-3`}>
+                  <span className={`${textSecondary} text-xs block`}>Classification</span>
+                  <span className={`${textMain} text-sm`}>{movie.Rated}</span>
                 </div>
-              </div>
+              )}
+              {movie.Language && movie.Language !== 'N/A' && (
+                <div className={`${bgCard} rounded-md p-3`}>
+                  <span className={`${textSecondary} text-xs block`}>Langue</span>
+                  <span className={`${textMain} text-sm`}>{movie.Language}</span>
+                </div>
+              )}
+              {movie.Country && movie.Country !== 'N/A' && (
+                <div className={`${bgCard} rounded-md p-3`}>
+                  <span className={`${textSecondary} text-xs block`}>Pays</span>
+                  <span className={`${textMain} text-sm`}>{movie.Country}</span>
+                </div>
+              )}
+              {movie.Runtime && movie.Runtime !== 'N/A' && (
+                <div className={`${bgCard} rounded-md p-3`}>
+                  <span className={`${textSecondary} text-xs block`}>Durée</span>
+                  <span className={`${textMain} text-sm`}>{movie.Runtime}</span>
+                </div>
+              )}
             </div>
 
-            {/* Avis utilisateurs */}
-            <div className={`rounded-lg p-6 ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-lg`}>
-              <h2 className="text-2xl font-bold mb-6">Avis des utilisateurs</h2>
+            {/* Awards */}
+            {movie.Awards && movie.Awards !== 'N/A' && (
+              <div className="mb-8">
+                <h2 className={`text-lg font-semibold mb-2 ${textSecondary}`}>Récompenses</h2>
+                <p className={`${textMain} text-sm`}>{movie.Awards}</p>
+              </div>
+            )}
 
-              {/* Écrire un avis (si connecté) */}
-              {user && (
-                <div className={`border-b ${isDark ? 'border-gray-700' : 'border-gray-200'} pb-6 mb-6`}>
-                  <h3 className="text-lg font-semibold mb-4">Écrire un avis</h3>
+            {/* Reviews Section */}
+            <div className={`${borderColor} border-t pt-8`}>
+              <h2 className="text-xl font-semibold mb-6">Avis</h2>
+
+              {/* Write Review - Only show if user hasn't reviewed yet */}
+              {user && !userReviewForMovie && (
+                <div className={`${borderColor} border-b pb-6 mb-6`}>
+                  <h3 className={`text-sm font-medium ${textSecondary} mb-4`}>Écrire un avis</h3>
                   <div className="mb-4">
-                    <label className="block text-sm font-medium mb-2">Votre note</label>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 mb-3">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <button
                           key={star}
@@ -192,136 +407,105 @@ function FilmDetail() {
                           <Star
                             className={`h-6 w-6 ${
                               star <= userRating
-                                ? 'text-yellow-400 fill-current'
-                                : 'text-gray-300'
+                                ? `${accentColor} fill-current`
+                                : isDark ? 'text-[#2c3440]' : 'text-gray-300'
                             }`}
                           />
                         </button>
                       ))}
                     </div>
                   </div>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium mb-2">Votre avis</label>
-                    <textarea
-                      value={userReview}
-                      onChange={(e) => setUserReview(e.target.value)}
-                      placeholder="Partagez votre avis sur ce film..."
-                      className={`w-full px-3 py-2 border rounded-lg ${
-                        isDark
-                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
-                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                      } focus:outline-none focus:ring-2 focus:ring-green-500`}
-                      rows={4}
-                    />
-                  </div>
+                  <textarea
+                    value={userReview}
+                    onChange={(e) => setUserReview(e.target.value)}
+                    placeholder="Partagez votre avis..."
+                    className={`w-full px-3 py-2 ${inputBg} ${borderColor} border rounded-md ${textMain} placeholder:${textSecondary} focus:outline-none focus:border-[#00e054] mb-3`}
+                    rows={3}
+                  />
                   <button
                     onClick={handleSubmitReview}
                     disabled={!userRating || !userReview.trim()}
-                    className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className={`px-4 py-2 ${accentBg} text-black rounded-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium`}
                   >
-                    Publier l'avis
+                    Publier
                   </button>
                 </div>
               )}
 
-              {/* Liste des avis */}
+              {/* User's existing review - with delete option */}
+              {userReviewForMovie && (
+                <div className={`${borderColor} border-b pb-6 mb-6 ${bgCard} rounded-md p-4`}>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={userReviewForMovie.avatar}
+                        alt={userReviewForMovie.user}
+                        className="w-8 h-8 rounded-full"
+                      />
+                      <span className={`font-medium text-sm ${textMain}`}>{userReviewForMovie.user} <span className={accentColor}>(Vous)</span></span>
+                    </div>
+                    <button
+                      onClick={handleDeleteReview}
+                      className={`p-2 ${textSecondary} hover:text-red-500 transition-colors`}
+                      title="Supprimer mon avis"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <div className="flex mb-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`h-4 w-4 ${
+                          star <= userReviewForMovie.rating
+                            ? `${accentColor} fill-current`
+                            : isDark ? 'text-[#2c3440]' : 'text-gray-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <p className={`${textMain} text-sm`}>{userReviewForMovie.comment}</p>
+                  <p className={`${textSecondary} text-xs mt-2`}>{userReviewForMovie.date}</p>
+                </div>
+              )}
+
+              {/* Reviews List */}
               <div className="space-y-6">
-                {movie.reviews.map((review) => (
-                  <div key={review.id} className={`border-b ${isDark ? 'border-gray-700' : 'border-gray-200'} pb-6 last:border-b-0`}>
-                    <div className="flex items-start space-x-4">
+                {allReviews.filter(r => r.userId !== user?.id || !user).map((review) => (
+                  <div key={review.id} className={`${borderColor} border-b pb-6 last:border-b-0`}>
+                    <div className="flex items-start gap-3">
                       <img
                         src={review.avatar}
                         alt={review.user}
-                        className="w-10 h-10 rounded-full"
+                        className="w-8 h-8 rounded-full"
                       />
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center space-x-2">
-                            <span className="font-medium">{review.user}</span>
-                            <div className="flex">
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                <Star
-                                  key={star}
-                                  className={`h-4 w-4 ${
-                                    star <= review.rating
-                                      ? 'text-yellow-400 fill-current'
-                                      : 'text-gray-300'
-                                  }`}
-                                />
-                              ))}
-                            </div>
+                          <span className={`font-medium text-sm ${textMain}`}>{review.user}</span>
+                          <div className="flex">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star
+                                key={star}
+                                className={`h-3 w-3 ${
+                                  star <= review.rating
+                                    ? `${accentColor} fill-current`
+                                    : isDark ? 'text-[#2c3440]' : 'text-gray-300'
+                                }`}
+                              />
+                            ))}
                           </div>
-                          <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                            {new Date(review.date).toLocaleDateString('fr-FR')}
-                          </span>
                         </div>
-                        <p className={`${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                          {review.comment}
-                        </p>
+                        <p className={`${textSecondary} text-sm`}>{review.comment}</p>
+                        {review.date && <p className={`${textSecondary} text-xs mt-2`}>{review.date}</p>}
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
-          </div>
 
-          {/* Sidebar avec actions */}
-          <div className="lg:col-span-1">
-            <div className={`sticky top-24 rounded-lg p-6 ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-lg`}>
-              <h3 className="text-lg font-bold mb-4">Actions</h3>
-              <div className="space-y-3">
-                <button
-                  onClick={() => setIsFavorite(!isFavorite)}
-                  className={`w-full flex items-center justify-center px-4 py-3 rounded-lg transition-colors ${
-                    isFavorite
-                      ? 'bg-red-500 text-white hover:bg-red-600'
-                      : `border-2 ${isDark ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`
-                  }`}
-                >
-                  <Heart className={`h-5 w-5 mr-2 ${isFavorite ? 'fill-current' : ''}`} />
-                  {isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
-                </button>
-
-                <button
-                  onClick={() => setIsWatched(!isWatched)}
-                  className={`w-full flex items-center justify-center px-4 py-3 rounded-lg transition-colors ${
-                    isWatched
-                      ? 'bg-blue-500 text-white hover:bg-blue-600'
-                      : `border-2 ${isDark ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`
-                  }`}
-                >
-                  <Eye className={`h-5 w-5 mr-2 ${isWatched ? 'fill-current' : ''}`} />
-                  {isWatched ? 'Marquer comme non vu' : 'Marquer comme vu'}
-                </button>
-
-                <button
-                  className={`w-full flex items-center justify-center px-4 py-3 rounded-lg transition-colors border-2 ${
-                    isDark ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <MessageCircle className="h-5 w-5 mr-2" />
-                  Écrire un avis
-                </button>
-              </div>
-
-              {/* Statistiques */}
-              <div className={`mt-6 pt-6 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-                <h4 className="font-semibold mb-3">Statistiques</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>Note moyenne:</span>
-                    <div className="flex items-center">
-                      <Star className="h-4 w-4 text-yellow-400 fill-current mr-1" />
-                      <span className="font-medium">{movie.rating}</span>
-                    </div>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Nombre d'avis:</span>
-                    <span className="font-medium">{movie.reviews.length}</span>
-                  </div>
-                </div>
-              </div>
+              {allReviews.length === 0 && (
+                <p className={`${textSecondary} text-center py-4`}>Aucun avis pour ce film</p>
+              )}
             </div>
           </div>
         </div>
