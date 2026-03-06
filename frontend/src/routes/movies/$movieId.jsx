@@ -1,8 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useContext, useState, useEffect } from 'react'
+import { useContext, useState } from 'react'
 import { Link } from '@tanstack/react-router'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { AuthContext } from '../../contexts'
+import { useQuery } from '@tanstack/react-query'
+import { AuthContext, ThemeContext } from '../../contexts'
 import { Star, Heart, Eye, ArrowLeft, Calendar, Clock, Film, Users, Trash2 } from 'lucide-react'
 import { MovieCardSkeleton } from '../../components/MovieCard'
 
@@ -18,8 +18,19 @@ const REVIEWS_KEY = 'cineconnect_reviews'
 function FilmDetail() {
   const { movieId } = Route.useParams()
   const { user } = useContext(AuthContext) || { user: null }
+  const { isDark } = useContext(ThemeContext) || { isDark: true }
   const apiKey = import.meta.env.VITE_OMDB_API_KEY
-  const queryClient = useQueryClient()
+
+  // Dynamic theme colors
+  const bgMain = isDark ? 'bg-[#14181c]' : 'bg-gray-100'
+  const bgCard = isDark ? 'bg-[#1c2228]' : 'bg-white'
+  const borderColor = isDark ? 'border-[#2c3440]' : 'border-gray-200'
+  const textMain = isDark ? 'text-white' : 'text-gray-900'
+  const textSecondary = isDark ? 'text-[#9ab]' : 'text-gray-600'
+  const accentColor = isDark ? 'text-[#00e054]' : 'text-green-600'
+  const accentBg = isDark ? 'bg-[#00e054]' : 'bg-green-600'
+  const inputBg = isDark ? 'bg-[#1c2228]' : 'bg-gray-50'
+  const hoverBg = isDark ? 'hover:bg-[#2c3440]' : 'hover:bg-gray-100'
 
   // Charger les favoris depuis localStorage
   const [favorites, setFavorites] = useState(() => {
@@ -163,9 +174,9 @@ function FilmDetail() {
 
   if (isPending) {
     return (
-      <div className="min-h-screen bg-[#14181c]">
+      <div className={`min-h-screen ${bgMain} ${textMain}`}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <Link to="/films" className="inline-flex items-center text-[#9ab] hover:text-[#00e054] transition-colors">
+          <Link to="/films" className={`inline-flex items-center ${textSecondary} hover:${accentColor} transition-colors`}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Retour aux films
           </Link>
@@ -173,7 +184,7 @@ function FilmDetail() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
-              <MovieCardSkeleton />
+              <MovieCardSkeleton isDark={isDark} />
             </div>
           </div>
         </div>
@@ -186,9 +197,9 @@ function FilmDetail() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#14181c]">
+      <div className={`min-h-screen ${bgMain} ${textMain}`}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <Link to="/films" className="inline-flex items-center text-[#9ab] hover:text-[#00e054] transition-colors">
+          <Link to="/films" className={`inline-flex items-center ${textSecondary} hover:${accentColor} transition-colors`}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Retour aux films
           </Link>
@@ -204,11 +215,11 @@ function FilmDetail() {
   const genres = movie.Genre ? movie.Genre.split(', ') : []
 
   return (
-    <div className="min-h-screen bg-[#14181c] text-white">
+    <div className={`min-h-screen ${bgMain} ${textMain} transition-colors duration-300`}>
       {/* Header */}
-      <div className="border-b border-[#2c3440]">
+      <div className={`${borderColor} border-b`}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <Link to="/films" className="inline-flex items-center text-[#9ab] hover:text-[#00e054] transition-colors text-sm">
+          <Link to="/films" className={`inline-flex items-center ${textSecondary} hover:${accentColor} transition-colors text-sm`}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Retour aux films
           </Link>
@@ -223,7 +234,7 @@ function FilmDetail() {
           <div className="md:col-span-1">
             <div className="sticky top-24">
               {/* Poster */}
-              <div className="bg-[#1c2228] rounded-md overflow-hidden mb-4">
+              <div className={`${bgCard} rounded-md overflow-hidden mb-4`}>
                 {movie.Poster && movie.Poster !== 'N/A' && (
                   <img
                     src={movie.Poster}
@@ -233,14 +244,14 @@ function FilmDetail() {
                 )}
               </div>
 
-              {/* Action Buttons - With persistent state */}
+              {/* Action Buttons */}
               <div className="space-y-2">
                 <button
                   onClick={toggleFavorite}
                   className={`w-full flex items-center justify-center px-4 py-2.5 rounded-md transition-all ${
                     isFavorite
-                      ? 'bg-[#00e054] text-black hover:bg-[#00cc45]'
-                      : 'bg-[#1c2228] text-white hover:bg-[#2c3440] border border-[#2c3440]'
+                      ? `${accentBg} text-black hover:opacity-90`
+                      : `${bgCard} ${textMain} ${hoverBg} border ${borderColor}`
                   }`}
                 >
                   <Heart className={`h-5 w-5 mr-2 ${isFavorite ? 'fill-current' : ''}`} />
@@ -251,8 +262,8 @@ function FilmDetail() {
                   onClick={toggleWatched}
                   className={`w-full flex items-center justify-center px-4 py-2.5 rounded-md transition-all ${
                     isWatchedList
-                      ? 'bg-[#00e054] text-black hover:bg-[#00cc45]'
-                      : 'bg-[#1c2228] text-white hover:bg-[#2c3440] border border-[#2c3440]'
+                      ? `${accentBg} text-black hover:opacity-90`
+                      : `${bgCard} ${textMain} ${hoverBg} border ${borderColor}`
                   }`}
                 >
                   <Eye className={`h-5 w-5 mr-2 ${isWatchedList ? 'fill-current' : ''}`} />
@@ -262,13 +273,13 @@ function FilmDetail() {
 
               {/* Rating Display */}
               {movie.imdbRating && movie.imdbRating !== 'N/A' && (
-                <div className="mt-4 bg-[#1c2228] rounded-md p-4">
+                <div className={`${bgCard} rounded-md p-4 mt-4`}>
                   <div className="flex items-center justify-center">
-                    <Star className="h-5 w-5 text-[#00e054] fill-current mr-2" />
+                    <Star className={`h-5 w-5 ${accentColor} fill-current mr-2`} />
                     <span className="text-2xl font-bold">{movie.imdbRating}</span>
-                    <span className="text-[#9ab] text-sm ml-1">/10</span>
+                    <span className={`${textSecondary} text-sm ml-1`}>/10</span>
                   </div>
-                  <p className="text-[#9ab] text-xs text-center mt-1">{movie.imdbVotes} votes</p>
+                  <p className={`${textSecondary} text-xs text-center mt-1`}>{movie.imdbVotes} votes</p>
                 </div>
               )}
             </div>
@@ -279,7 +290,7 @@ function FilmDetail() {
             {/* Title & Year */}
             <div className="mb-6">
               <h1 className="text-3xl md:text-4xl font-semibold mb-2">{movie.Title}</h1>
-              <div className="flex flex-wrap items-center gap-4 text-[#9ab] text-sm">
+              <div className={`flex flex-wrap items-center gap-4 ${textSecondary} text-sm`}>
                 {movie.Year && (
                   <span className="flex items-center">
                     <Calendar className="h-4 w-4 mr-1" />
@@ -301,7 +312,7 @@ function FilmDetail() {
                 {genres.map((g, index) => (
                   <span
                     key={index}
-                    className="px-3 py-1 bg-[#1c2228] text-[#9ab] text-sm rounded-md hover:text-[#00e054] hover:border-[#00e054] border border-transparent transition-colors cursor-pointer"
+                    className={`px-3 py-1 ${bgCard} ${textSecondary} text-sm rounded-md hover:${accentColor} border border-transparent hover:border-current transition-colors cursor-pointer`}
                   >
                     {g}
                   </span>
@@ -312,8 +323,8 @@ function FilmDetail() {
             {/* Synopsis */}
             {movie.Plot && movie.Plot !== 'N/A' && (
               <div className="mb-6">
-                <h2 className="text-lg font-semibold mb-3 text-[#9ab]">Synopsis</h2>
-                <p className="text-white leading-relaxed">
+                <h2 className={`text-lg font-semibold mb-3 ${textSecondary}`}>Synopsis</h2>
+                <p className={`${textMain} leading-relaxed`}>
                   {movie.Plot}
                 </p>
               </div>
@@ -322,49 +333,49 @@ function FilmDetail() {
             {/* Director */}
             {movie.Director && movie.Director !== 'N/A' && (
               <div className="mb-6">
-                <h2 className="text-lg font-semibold mb-2 flex items-center text-[#9ab]">
+                <h2 className={`text-lg font-semibold mb-2 flex items-center ${textSecondary}`}>
                   <Film className="h-4 w-4 mr-2" />
                   Réalisateur
                 </h2>
-                <p className="text-white">{movie.Director}</p>
+                <p className={textMain}>{movie.Director}</p>
               </div>
             )}
 
             {/* Cast */}
             {movie.Actors && movie.Actors !== 'N/A' && (
               <div className="mb-6">
-                <h2 className="text-lg font-semibold mb-2 flex items-center text-[#9ab]">
+                <h2 className={`text-lg font-semibold mb-2 flex items-center ${textSecondary}`}>
                   <Users className="h-4 w-4 mr-2" />
                   Acteurs
                 </h2>
-                <p className="text-white">{movie.Actors}</p>
+                <p className={textMain}>{movie.Actors}</p>
               </div>
             )}
 
             {/* Additional Info Grid */}
             <div className="grid grid-cols-2 gap-4 mb-8">
               {movie.Rated && movie.Rated !== 'N/A' && (
-                <div className="bg-[#1c2228] rounded-md p-3">
-                  <span className="text-[#9ab] text-xs block">Classification</span>
-                  <span className="text-white text-sm">{movie.Rated}</span>
+                <div className={`${bgCard} rounded-md p-3`}>
+                  <span className={`${textSecondary} text-xs block`}>Classification</span>
+                  <span className={`${textMain} text-sm`}>{movie.Rated}</span>
                 </div>
               )}
               {movie.Language && movie.Language !== 'N/A' && (
-                <div className="bg-[#1c2228] rounded-md p-3">
-                  <span className="text-[#9ab] text-xs block">Langue</span>
-                  <span className="text-white text-sm">{movie.Language}</span>
+                <div className={`${bgCard} rounded-md p-3`}>
+                  <span className={`${textSecondary} text-xs block`}>Langue</span>
+                  <span className={`${textMain} text-sm`}>{movie.Language}</span>
                 </div>
               )}
               {movie.Country && movie.Country !== 'N/A' && (
-                <div className="bg-[#1c2228] rounded-md p-3">
-                  <span className="text-[#9ab] text-xs block">Pays</span>
-                  <span className="text-white text-sm">{movie.Country}</span>
+                <div className={`${bgCard} rounded-md p-3`}>
+                  <span className={`${textSecondary} text-xs block`}>Pays</span>
+                  <span className={`${textMain} text-sm`}>{movie.Country}</span>
                 </div>
               )}
               {movie.Runtime && movie.Runtime !== 'N/A' && (
-                <div className="bg-[#1c2228] rounded-md p-3">
-                  <span className="text-[#9ab] text-xs block">Durée</span>
-                  <span className="text-white text-sm">{movie.Runtime}</span>
+                <div className={`${bgCard} rounded-md p-3`}>
+                  <span className={`${textSecondary} text-xs block`}>Durée</span>
+                  <span className={`${textMain} text-sm`}>{movie.Runtime}</span>
                 </div>
               )}
             </div>
@@ -372,19 +383,19 @@ function FilmDetail() {
             {/* Awards */}
             {movie.Awards && movie.Awards !== 'N/A' && (
               <div className="mb-8">
-                <h2 className="text-lg font-semibold mb-2 text-[#9ab]">Récompenses</h2>
-                <p className="text-white text-sm">{movie.Awards}</p>
+                <h2 className={`text-lg font-semibold mb-2 ${textSecondary}`}>Récompenses</h2>
+                <p className={`${textMain} text-sm`}>{movie.Awards}</p>
               </div>
             )}
 
             {/* Reviews Section */}
-            <div className="border-t border-[#2c3440] pt-8">
+            <div className={`${borderColor} border-t pt-8`}>
               <h2 className="text-xl font-semibold mb-6">Avis</h2>
 
               {/* Write Review - Only show if user hasn't reviewed yet */}
               {user && !userReviewForMovie && (
-                <div className="border-b border-[#2c3440] pb-6 mb-6">
-                  <h3 className="text-sm font-medium text-[#9ab] mb-4">Écrire un avis</h3>
+                <div className={`${borderColor} border-b pb-6 mb-6`}>
+                  <h3 className={`text-sm font-medium ${textSecondary} mb-4`}>Écrire un avis</h3>
                   <div className="mb-4">
                     <div className="flex gap-1 mb-3">
                       {[1, 2, 3, 4, 5].map((star) => (
@@ -396,8 +407,8 @@ function FilmDetail() {
                           <Star
                             className={`h-6 w-6 ${
                               star <= userRating
-                                ? 'text-[#00e054] fill-current'
-                                : 'text-[#2c3440]'
+                                ? `${accentColor} fill-current`
+                                : isDark ? 'text-[#2c3440]' : 'text-gray-300'
                             }`}
                           />
                         </button>
@@ -408,13 +419,13 @@ function FilmDetail() {
                     value={userReview}
                     onChange={(e) => setUserReview(e.target.value)}
                     placeholder="Partagez votre avis..."
-                    className="w-full px-3 py-2 bg-[#1c2228] border border-[#2c3440] rounded-md text-white placeholder-[#9ab] focus:outline-none focus:border-[#00e054] mb-3"
+                    className={`w-full px-3 py-2 ${inputBg} ${borderColor} border rounded-md ${textMain} placeholder:${textSecondary} focus:outline-none focus:border-[#00e054] mb-3`}
                     rows={3}
                   />
                   <button
                     onClick={handleSubmitReview}
                     disabled={!userRating || !userReview.trim()}
-                    className="px-4 py-2 bg-[#00e054] text-black rounded-md hover:bg-[#00cc45] disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                    className={`px-4 py-2 ${accentBg} text-black rounded-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium`}
                   >
                     Publier
                   </button>
@@ -423,7 +434,7 @@ function FilmDetail() {
 
               {/* User's existing review - with delete option */}
               {userReviewForMovie && (
-                <div className="border-b border-[#2c3440] pb-6 mb-6 bg-[#1c2228] rounded-md p-4">
+                <div className={`${borderColor} border-b pb-6 mb-6 ${bgCard} rounded-md p-4`}>
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <img
@@ -431,11 +442,11 @@ function FilmDetail() {
                         alt={userReviewForMovie.user}
                         className="w-8 h-8 rounded-full"
                       />
-                      <span className="font-medium text-sm">{userReviewForMovie.user} <span className="text-[#00e054]">(Vous)</span></span>
+                      <span className={`font-medium text-sm ${textMain}`}>{userReviewForMovie.user} <span className={accentColor}>(Vous)</span></span>
                     </div>
                     <button
                       onClick={handleDeleteReview}
-                      className="p-2 text-[#9ab] hover:text-red-500 transition-colors"
+                      className={`p-2 ${textSecondary} hover:text-red-500 transition-colors`}
                       title="Supprimer mon avis"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -447,21 +458,21 @@ function FilmDetail() {
                         key={star}
                         className={`h-4 w-4 ${
                           star <= userReviewForMovie.rating
-                            ? 'text-[#00e054] fill-current'
-                            : 'text-[#2c3440]'
+                            ? `${accentColor} fill-current`
+                            : isDark ? 'text-[#2c3440]' : 'text-gray-300'
                         }`}
                       />
                     ))}
                   </div>
-                  <p className="text-white text-sm">{userReviewForMovie.comment}</p>
-                  <p className="text-[#9ab] text-xs mt-2">{userReviewForMovie.date}</p>
+                  <p className={`${textMain} text-sm`}>{userReviewForMovie.comment}</p>
+                  <p className={`${textSecondary} text-xs mt-2`}>{userReviewForMovie.date}</p>
                 </div>
               )}
 
               {/* Reviews List */}
               <div className="space-y-6">
                 {allReviews.filter(r => r.userId !== user?.id || !user).map((review) => (
-                  <div key={review.id} className="border-b border-[#2c3440] pb-6 last:border-b-0">
+                  <div key={review.id} className={`${borderColor} border-b pb-6 last:border-b-0`}>
                     <div className="flex items-start gap-3">
                       <img
                         src={review.avatar}
@@ -470,22 +481,22 @@ function FilmDetail() {
                       />
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="font-medium text-sm">{review.user}</span>
+                          <span className={`font-medium text-sm ${textMain}`}>{review.user}</span>
                           <div className="flex">
                             {[1, 2, 3, 4, 5].map((star) => (
                               <Star
                                 key={star}
                                 className={`h-3 w-3 ${
                                   star <= review.rating
-                                    ? 'text-[#00e054] fill-current'
-                                    : 'text-[#2c3440]'
+                                    ? `${accentColor} fill-current`
+                                    : isDark ? 'text-[#2c3440]' : 'text-gray-300'
                                 }`}
                               />
                             ))}
                           </div>
                         </div>
-                        <p className="text-[#9ab] text-sm">{review.comment}</p>
-                        {review.date && <p className="text-[#9ab] text-xs mt-2">{review.date}</p>}
+                        <p className={`${textSecondary} text-sm`}>{review.comment}</p>
+                        {review.date && <p className={`${textSecondary} text-xs mt-2`}>{review.date}</p>}
                       </div>
                     </div>
                   </div>
@@ -493,7 +504,7 @@ function FilmDetail() {
               </div>
 
               {allReviews.length === 0 && (
-                <p className="text-[#9ab] text-center py-4">Aucun avis pour ce film</p>
+                <p className={`${textSecondary} text-center py-4`}>Aucun avis pour ce film</p>
               )}
             </div>
           </div>

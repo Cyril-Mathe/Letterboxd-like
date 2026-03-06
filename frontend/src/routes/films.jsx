@@ -1,561 +1,241 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useState, useMemo } from 'react'
-import { Search, Star, Film, X, LayoutGrid, List, Heart } from 'lucide-react'
+import { useContext, useState } from 'react'
+import { ThemeContext } from '../contexts'
 import { useQuery } from '@tanstack/react-query'
-import { useNavigate } from "@tanstack/react-router"
+import { Search, Play } from 'lucide-react'
+import { Link } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/films')({
   component: Films,
 })
 
-// Catégories disponibles
-const CATEGORIES = [
-  { id: 'all', name: 'Tous', icon: LayoutGrid },
-  { id: 'action', name: 'Action', icon: Film },
-  { id: 'drame', name: 'Drame', icon: Film },
-  { id: 'science-fiction', name: 'Science-Fiction', icon: Film },
-  { id: 'comedy', name: 'Comédie', icon: Film },
-  { id: 'thriller', name: 'Thriller', icon: Film },
-  { id: 'horror', name: 'Horreur', icon: Film },
-  { id: 'romance', name: 'Romance', icon: Film },
-  { id: 'animation', name: 'Animation', icon: Film },
-  { id: 'adventure', name: 'Aventure', icon: Film },
-  { id: 'crime', name: 'Crime', icon: Film },
-  { id: 'documentary', name: 'Documentaire', icon: Film },
-]
+// Movie Card Component
+function MovieCard({ movie, isDark }) {
+  const title = movie.Title || movie.title
+  const poster = movie.Poster || movie.poster
+  const rating = movie.imdbRating || movie.rating
+  const year = movie.Year || movie.year
+  const id = movie.imdbID || movie.id
 
-// Clé pour le localStorage des favoris
-const FAVORITES_KEY = 'cineconnect_favorites'
-
-function Films() {
-  const navigate = useNavigate()
-  const apiKey = import.meta.env.VITE_OMDB_API_KEY
-
-  const [searchTerm, setSearchTerm] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('all')
-  const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [viewMode, setViewMode] = useState('grid')
-
-  // Charger les favoris depuis localStorage
-  const [favorites, setFavorites] = useState(() => {
-    const saved = localStorage.getItem(FAVORITES_KEY)
-    return saved ? JSON.parse(saved) : []
-  })
-
-  // Sauvegarder les favoris
-  const saveFavorites = (newFavorites) => {
-    localStorage.setItem(FAVORITES_KEY, JSON.stringify(newFavorites))
-    setFavorites(newFavorites)
-  }
-
-  // Basculer favori
-  const toggleFavorite = (movie, e) => {
-    e.stopPropagation()
-    const isFav = favorites.some(f => f.imdbID === movie.imdbID)
-    let newFavorites
-    if (isFav) {
-      newFavorites = favorites.filter(f => f.imdbID !== movie.imdbID)
-    } else {
-      newFavorites = [...favorites, { imdbID: movie.imdbID, Title: movie.Title, Poster: movie.Poster }]
-    }
-    saveFavorites(newFavorites)
-  }
-
-  // Fetch movies initiaux (trending)
-  const { isPending, error, data: initialMovies } = useQuery({
-    queryKey: ['movies', 'trending'],
-    queryFn: async () => {
-      const titles = [
-        "mulholland", "batman", "oppenheimer", "dune", "interstellar",
-        "inception", "gladiator", "avatar", "matrix", "parasite",
-        "joker", "fight club", "whiplash", "godfather", "dark knight",
-        "titanic", "forrest gump", "pulp fiction", "star wars", "iron man",
-        "captain america", "thor", "spider-man", "black panther", "wonder woman",
-        "aquaman", "harry potter", "lord of the rings", "jurassic park", "lion king",
-        "mad max", "the avengers", "frozen", "toy story", "finding nemo"
-      ]
-
-      const responses = await Promise.all(
-        titles.map(title =>
-          fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${apiKey}`)
-        )
-      )
-
-      const moviesData = await Promise.all(responses.map(res => res.json()))
-      const movies = moviesData.filter(movie => movie.Response === "True")
-
-      // Deduplicate by imdbID
-      const uniqueMovies = movies.filter((movie, index, self) =>
-        index === self.findIndex(m => m.imdbID === movie.imdbID)
-      )
-
-      return uniqueMovies
-    },
-    staleTime: 1000 * 60 * 5,
-    retry: 2,
-  })
-
-  // Search with exact match first, then fallback to broad search
-  const { data: searchResults, isLoading: isSearchingData } = useQuery({
-    queryKey: ['movies', 'search', searchTerm],
-    queryFn: async () => {
-      if (!searchTerm || searchTerm.length < 2) return null
-      
-      // First, try exact match using the "type=movie" and check for exact title
-      const exactRes = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(searchTerm)}&type=movie&apikey=${apiKey}`)
-      const exactData = await exactRes.json()
-      
-      if (exactData.Response === "True") {
-        // Check if title matches exactly (case-insensitive)
-        if (exactData.Title.toLowerCase() === searchTerm.toLowerCase()) {
-          return { exact: [exactData], broad: [] }
-        }
-      }
-      
-      // If no exact match, do broad search
-      const broadRes = await fetch(`https://www.omdbapi.com/?s=${encodeURIComponent(searchTerm)}&type=movie&page=1&apikey=${apiKey}`)
-      const broadData = await broadRes.json()
-      
-      if (broadData.Response === "False") {
-        return { exact: [], broad: [] }
-      }
-      
-      return { exact: [], broad: broadData.Search || [] }
-    },
-    enabled: searchTerm.length >= 2,
-    staleTime: 1000 * 60 * 2,
-  })
-
-  // Filter results to show exact matches first
-  const filteredSearchResults = useMemo(() => {
-    if (!searchResults) return null
-    
-    // If we have exact matches, show only those
-    if (searchResults.exact && searchResults.exact.length > 0) {
-      return searchResults.exact
-    }
-    
-    // Otherwise show broad results
-    return searchResults.broad || []
-  }, [searchResults])
-
-  // Combiner les résultats
-  const allMovies = useMemo(() => {
-    if (searchTerm.length >= 2 && filteredSearchResults) {
-      return filteredSearchResults
-    }
-    return initialMovies || []
-  }, [searchTerm, filteredSearchResults, initialMovies])
-
-  // Catégories dynamiques
-  const allGenres = useMemo(() => {
-    if (!allMovies) return []
-    const genres = new Set()
-    allMovies.forEach(movie => {
-      if (movie.Genre) {
-        movie.Genre.split(', ').forEach(genre => {
-          genres.add(genre.trim().toLowerCase())
-        })
-      }
-    })
-    return Array.from(genres)
-  }, [allMovies])
-
-  // Filtrer par catégorie
-  const filteredMovies = useMemo(() => {
-    if (!allMovies) return []
-    if (selectedCategory === 'all') return allMovies
-    
-    return allMovies.filter(movie => {
-      if (!movie.Genre) return false
-      const movieGenres = movie.Genre.toLowerCase().split(', ').map(g => g.trim())
-      return movieGenres.includes(selectedCategory)
-    })
-  }, [allMovies, selectedCategory])
-
-  // Obtenir les catégories d'un film
-  const getMovieGenres = (genreString) => {
-    if (!genreString) return []
-    return genreString.split(', ').slice(0, 2)
-  }
-
-  // Couleur du badge
-  const getCategoryColor = (genre) => {
-    const colors = {
-      'action': 'bg-red-600/20 text-red-400 border-red-600/30',
-      'drame': 'bg-blue-600/20 text-blue-400 border-blue-600/30',
-      'science fiction': 'bg-purple-600/20 text-purple-400 border-purple-600/30',
-      'comedy': 'bg-yellow-600/20 text-yellow-400 border-yellow-600/30',
-      'thriller': 'bg-orange-600/20 text-orange-400 border-orange-600/30',
-      'horror': 'bg-red-800/20 text-red-300 border-red-800/30',
-      'romance': 'bg-pink-600/20 text-pink-400 border-pink-600/30',
-      'animation': 'bg-green-600/20 text-green-400 border-green-600/30',
-      'adventure': 'bg-amber-600/20 text-amber-400 border-amber-600/30',
-      'crime': 'bg-slate-600/20 text-slate-400 border-slate-600/30',
-      'documentary': 'bg-cyan-600/20 text-cyan-400 border-cyan-600/30',
-    }
-    return colors[genre.toLowerCase()] || 'bg-gray-600/20 text-gray-400 border-gray-600/30'
-  }
-
-  // Vérifier si favori
-  const isFavorite = (imdbID) => {
-    return favorites.some(f => f.imdbID === imdbID)
-  }
-
-  // Loader
-  if (isPending) {
-    return (
-      <div className="min-h-screen bg-[#14181c] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#00e054]"></div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-[#14181c] flex items-center justify-center">
-        <p className="text-red-500">Erreur: {error.message}</p>
-      </div>
-    )
-  }
+  if (!poster || poster === 'N/A') return null
 
   return (
-    <div className="min-h-screen bg-[#14181c] text-white">
-      {/* Header */}
-      <div className="sticky top-0 z-40 bg-[#14181c] border-b border-[#2c3440]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-2 hover:bg-[#1c2228] rounded-md transition-colors"
-              >
-                <Film className="h-5 w-5 text-[#00e054]" />
-              </button>
-              <h1 className="text-2xl font-bold">
-                Films
-              </h1>
-              <span className="text-[#9ab] text-sm">
-                ({filteredMovies.length} {searchTerm.length >= 2 ? 'résultats' : 'films'})
-              </span>
+    <Link to="/movies/$movieId" params={{ movieId: id }} className="block group flex-shrink-0 w-[140px] sm:w-[160px] md:w-[180px]">
+      <div className="bg-[#1c2228] rounded-md overflow-hidden transition-all duration-200 hover:shadow-lg hover:ring-1 hover:ring-[#00e054] hover:scale-105 cursor-pointer">
+        <div className="relative aspect-[2/3] overflow-hidden">
+          <img 
+            src={poster} 
+            alt={title} 
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+            loading="lazy"
+          />
+          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-[#00e054] flex items-center justify-center">
+              <Play className="h-6 w-6 text-black ml-1" fill="currentColor" />
             </div>
-
-            {/* Search Form */}
-            <div className="flex items-center gap-3">
-              <form onSubmit={(e) => e.preventDefault()} className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#9ab]" />
-                  <input
-                    type="text"
-                    placeholder="Rechercher un film..."
-                    className="w-full md:w-80 pl-10 pr-10 py-2 bg-[#1c2228] border border-[#2c3440] rounded-md text-white placeholder-[#9ab] focus:outline-none focus:ring-1 focus:ring-[#00e054] focus:border-[#00e054]"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                  {searchTerm && (
-                    <button
-                      type="button"
-                      onClick={() => setSearchTerm('')}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#9ab] hover:text-white"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              </form>
-
-              {/* Loading indicator */}
-              {isSearchingData && (
-                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-[#00e054]"></div>
-              )}
-
-              {/* View Toggle */}
-              <div className="hidden md:flex items-center bg-[#1c2228] rounded-md p-1">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded ${viewMode === 'grid' ? 'bg-[#00e054] text-black' : 'text-[#9ab] hover:text-white'}`}
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`p-2 rounded ${viewMode === 'list' ? 'bg-[#00e054] text-black' : 'text-[#9ab] hover:text-white'}`}
-                >
-                  <List className="h-4 w-4" />
-                </button>
-              </div>
+          </div>
+          {rating && rating !== 'N/A' && (
+            <div className="absolute top-2 right-2 bg-black/75 text-white px-2 py-0.5 rounded text-xs font-medium flex items-center">
+              <span className="text-yellow-400 mr-1">★</span>
+              {rating}
             </div>
-
+          )}
+        </div>
+        
+        <div className="p-2">
+          <h3 className="font-medium text-xs mb-1 line-clamp-2 text-white group-hover:text-[#00e054] transition-colors">
+            {title}
+          </h3>
+          <div className="flex items-center justify-between text-xs text-[#9ab]">
+            <span>{year}</span>
           </div>
         </div>
       </div>
+    </Link>
+  )
+}
 
-      <div className="flex">
-        {/* Sidebar */}
-        <aside className={`${sidebarOpen ? 'w-64' : 'w-0'} fixed left-0 top-[73px] bottom-0 bg-[#14181c] border-r border-[#2c3440] overflow-y-auto transition-all duration-300 z-30`}>
-          <div className="p-4">
-            {/* Favoris */}
-            {favorites.length > 0 && (
-              <>
-                <h2 className="text-sm font-semibold text-[#00e054] uppercase tracking-wider mb-3 flex items-center gap-2">
-                  <Heart className="h-4 w-4 fill-current" />
-                  Mes Favoris
-                </h2>
-                <div className="space-y-1 mb-4">
-                  {favorites.slice(0, 5).map(fav => (
-                    <button
-                      key={fav.imdbID}
-                      onClick={() => navigate({ to: '/movies/$movieId', params: { movieId: fav.imdbID } })}
-                      className="w-full text-left px-3 py-2 text-sm text-[#9ab] hover:text-white hover:bg-[#1c2228] rounded-md transition-colors flex items-center gap-2"
-                    >
-                      <img src={fav.Poster} alt="" className="w-6 h-8 object-cover rounded" />
-                      <span className="truncate">{fav.Title}</span>
-                    </button>
-                  ))}
-                </div>
-                <div className="border-t border-[#2c3440] my-4"></div>
-              </>
-            )}
+// Skeleton loading
+function MovieCardSkeleton() {
+  return (
+    <div className="bg-[#1c2228] rounded-md overflow-hidden animate-pulse flex-shrink-0 w-[140px] sm:w-[160px] md:w-[180px]">
+      <div className="aspect-[2/3] bg-[#2c3440]" />
+      <div className="p-2">
+        <div className="h-3 bg-[#2c3440] rounded mb-2" />
+        <div className="h-2 bg-[#2c3440] rounded w-1/2" />
+      </div>
+    </div>
+  )
+}
 
-            <h2 className="text-sm font-semibold text-[#9ab] uppercase tracking-wider mb-3">
-              Catégories
-            </h2>
-            <nav className="space-y-1">
-              {CATEGORIES.map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => setSelectedCategory(category.id)}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-                    selectedCategory === category.id
-                      ? 'bg-[#00e054]/10 text-[#00e054] border-l-2 border-[#00e054]'
-                      : 'text-[#9ab] hover:bg-[#1c2228] hover:text-white'
-                  }`}
-                >
-                  <category.icon className="h-4 w-4" />
-                  {category.name}
-                </button>
-              ))}
-            </nav>
+// Horizontal Movie Section Component
+function MovieSection({ title, searchTerm, apiKey, isDark, page = 1 }) {
+  const { data: movies, isLoading, error } = useQuery({
+    queryKey: ['movies', searchTerm, page],
+    queryFn: async () => {
+      const res = await fetch(`https://www.omdbapi.com/?s=${searchTerm}&type=movie&page=${page}&apikey=${apiKey}`)
+      const data = await res.json()
+      if (data.Response === 'True' && data.Search) {
+        return data.Search
+      }
+      return []
+    },
+    staleTime: 1000 * 60 * 30,
+  })
 
-            {/* Genres dynamiques */}
-            {allGenres.length > 0 && (
-              <>
-                <h2 className="text-sm font-semibold text-[#9ab] uppercase tracking-wider mb-3 mt-6">
-                  Genres OMDB
-                </h2>
-                <nav className="space-y-1">
-                  {allGenres.slice(0, 10).map((genre) => (
-                    <button
-                      key={genre}
-                      onClick={() => setSelectedCategory(genre)}
-                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors capitalize ${
-                        selectedCategory === genre
-                          ? 'bg-[#00e054]/10 text-[#00e054] border-l-2 border-[#00e054]'
-                          : 'text-[#9ab] hover:bg-[#1c2228] hover:text-white'
-                      }`}
-                    >
-                      <Film className="h-4 w-4" />
-                      {genre}
-                    </button>
-                  ))}
-                </nav>
-              </>
-            )}
+  const textMain = isDark ? 'text-white' : 'text-gray-900'
+
+  if (isLoading) {
+    return (
+      <div className="mb-8">
+        <h2 className={`text-lg font-medium mb-4 ${textMain}`}>{title}</h2>
+        <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-4 -mx-4 px-4">
+          {[...Array(8)].map((_, i) => (
+            <MovieCardSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !movies || movies.length === 0) return null
+
+  return (
+    <div className="mb-8">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className={`text-lg font-medium ${textMain}`}>{title}</h2>
+      </div>
+      <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-4 -mx-4 px-4">
+        {movies.map((movie) => (
+          <MovieCard key={movie.imdbID} movie={movie} isDark={isDark} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function Films() {
+  const { isDark } = useContext(ThemeContext)
+  const [searchTerm, setSearchTerm] = useState('')
+  
+  const apiKey = import.meta.env.VITE_OMDB_API_KEY
+  
+  const bgMain = isDark ? 'bg-[#14181c]' : 'bg-gray-50'
+  const borderColor = isDark ? 'border-[#2c3440]' : 'border-gray-200'
+  const textMain = isDark ? 'text-white' : 'text-gray-900'
+  const textSecondary = isDark ? 'text-[#9ab]' : 'text-gray-600'
+  const inputBg = isDark ? 'bg-[#1c2228]' : 'bg-white'
+
+  // Plus de catégories de films via API OMDB
+  const categories = [
+    { title: 'Films Populaires', search: 'popular movie', page: 1 },
+    { title: 'Meilleurs Films', search: 'best movie', page: 1 },
+    { title: 'Films d\'Action', search: 'action', page: 1 },
+    { title: 'Science-Fiction', search: 'sci-fi', page: 1 },
+    { title: 'Thrillers', search: 'thriller', page: 1 },
+    { title: 'Comédies', search: 'comedy', page: 1 },
+    { title: 'Drames', search: 'drama', page: 1 },
+    { title: 'Horreur', search: 'horror', page: 1 },
+    { title: 'Aventure', search: 'adventure', page: 1 },
+    { title: 'Romance', search: 'romance', page: 1 },
+    { title: 'Animation', search: 'animation', page: 1 },
+    { title: 'Documentaire', search: 'documentary', page: 1 },
+    { title: 'Fantasy', search: 'fantasy', page: 1 },
+    { title: 'Policier', search: 'crime', page: 1 },
+    { title: 'Musical', search: 'musical', page: 1 },
+    { title: 'Guerre', search: 'war', page: 1 },
+    { title: 'Western', search: 'western', page: 1 },
+    { title: 'Biopic', search: 'biography', page: 1 },
+    { title: 'Sport', search: 'sport', page: 1 },
+    { title: 'Mystère', search: 'mystery', page: 1 },
+  ]
+
+  // Recherche de films
+  const { data: searchResults, isLoading: isSearching } = useQuery({
+    queryKey: ['search', searchTerm],
+    queryFn: async () => {
+      if (!searchTerm || searchTerm.length < 2) return []
+      const res = await fetch(`https://www.omdbapi.com/?s=${encodeURIComponent(searchTerm)}&type=movie&page=1&apikey=${apiKey}`)
+      const data = await res.json()
+      if (data.Response === 'True' && data.Search) {
+        return data.Search.slice(0, 30)
+      }
+      return []
+    },
+    enabled: searchTerm.length >= 2,
+  })
+
+  return (
+    <div className={`min-h-screen ${bgMain} ${textMain} transition-colors duration-300`}>
+      {/* Header */}
+      <header className={`${bgMain} ${borderColor} border-b sticky top-0 z-40`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight">
+                Films
+              </h1>
+              <p className={`text-sm ${textSecondary}`}>
+                Découvrez les meilleurs films
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative">
+                <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${textSecondary}`} />
+                <input
+                  type="text"
+                  placeholder="Rechercher un film..."
+                  className={`w-full sm:w-64 pl-10 pr-4 py-2 ${inputBg} ${borderColor} rounded-md ${textMain} placeholder:${textSecondary} focus:outline-none focus:ring-1 focus:ring-[#00e054] focus:border-[#00e054] transition-colors`}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
           </div>
-        </aside>
+        </div>
+      </header>
 
-        {/* Main Content */}
-        <main className={`flex-1 ${sidebarOpen ? 'ml-64' : 'ml-0'} transition-all duration-300`}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            
-            {/* Info recherche */}
-            {searchTerm.length >= 2 && (
-              <div className="mb-6 flex items-center gap-2">
-                <span className="text-[#9ab]">Résultats pour:</span>
-                <span className="px-3 py-1 bg-[#00e054]/20 text-[#00e054] rounded-full text-sm border border-[#00e054]/30">
-                  "{searchTerm}"
-                </span>
-                <button
-                  onClick={() => setSearchTerm('')}
-                  className="text-[#9ab] hover:text-white text-sm"
-                >
-                  (Effacer)
-                </button>
+      {/* Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {searchTerm && searchTerm.length >= 2 ? (
+          // Search Results
+          <div>
+            <h2 className={`text-xl font-medium mb-6`}>
+              Résultats pour "{searchTerm}"
+            </h2>
+            {isSearching ? (
+              <div className="flex flex-wrap gap-4">
+                {[...Array(12)].map((_, i) => (
+                  <MovieCardSkeleton key={i} />
+                ))}
               </div>
-            )}
-
-            {/* Catégorie active */}
-            {selectedCategory !== 'all' && !searchTerm && (
-              <div className="mb-6 flex items-center gap-2">
-                <span className="text-[#9ab]">Filtré par:</span>
-                <span className="px-3 py-1 bg-[#00e054]/20 text-[#00e054] rounded-full text-sm capitalize border border-[#00e054]/30">
-                  {selectedCategory}
-                </span>
-                <button
-                  onClick={() => setSelectedCategory('all')}
-                  className="text-[#9ab] hover:text-white text-sm"
-                >
-                  (Effacer)
-                </button>
-              </div>
-            )}
-
-            {/* Films Grid - ENTIRE CARD IS CLICKABLE */}
-            {viewMode === 'grid' ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-                {filteredMovies.map((movie) => (
-                  <div
-                    key={movie.imdbID}
-                    onClick={() => navigate({ to: '/movies/$movieId', params: { movieId: movie.imdbID } })}
-                    className="bg-[#1c2228] rounded-md overflow-hidden cursor-pointer hover:shadow-lg hover:ring-1 hover:ring-[#00e054] hover:scale-[1.03] transition-all duration-200 group"
-                  >
-                    <div className="relative aspect-[2/3]">
-                      {movie.Poster && movie.Poster !== 'N/A' && (
-                        <img
-                          src={movie.Poster}
-                          alt={movie.Title}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                      )}
-
-                      {/* Rating */}
-                      {movie.imdbRating && movie.imdbRating !== 'N/A' && (
-                        <div className="absolute top-2 right-2 bg-black/80 text-white px-2 py-1 rounded text-xs font-medium flex items-center">
-                          {movie.imdbRating}
-                          <Star className="h-3 w-3 ml-1 fill-current text-[#00e054]" />
-                        </div>
-                      )}
-
-                      {/* Favorite Button - Click stops propagation */}
-                      <button
-                        onClick={(e) => toggleFavorite(movie, e)}
-                        className={`absolute top-2 left-2 p-1.5 rounded-full transition-colors ${
-                          isFavorite(movie.imdbID)
-                            ? 'bg-[#00e054] text-black'
-                            : 'bg-black/60 text-white hover:bg-[#00e054] hover:text-black'
-                        }`}
-                      >
-                        <Heart className={`h-4 w-4 ${isFavorite(movie.imdbID) ? 'fill-current' : ''}`} />
-                      </button>
-
-                      {/* Genres au hover */}
-                      <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/90 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                        <div className="flex flex-wrap gap-1">
-                          {getMovieGenres(movie.Genre).map((genre, idx) => (
-                            <span
-                              key={idx}
-                              className={`px-2 py-0.5 text-[10px] rounded border ${getCategoryColor(genre)}`}
-                            >
-                              {genre}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="p-3">
-                      <h3 className="font-medium text-sm mb-1 line-clamp-2 group-hover:text-[#00e054] transition-colors">
-                        {movie.Title}
-                      </h3>
-                      <div className="flex items-center justify-between text-xs text-[#9ab]">
-                        <span>{movie.Year}</span>
-                        {movie.Genre && (
-                          <span className="line-clamp-1">{movie.Genre.split(', ')[0]}</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+            ) : searchResults && searchResults.length > 0 ? (
+              <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
+                {searchResults.map((movie) => (
+                  <MovieCard key={movie.imdbID} movie={movie} isDark={isDark} />
                 ))}
               </div>
             ) : (
-              // View Liste - ENTIRE CARD IS CLICKABLE
-              <div className="space-y-3">
-                {filteredMovies.map((movie) => (
-                  <div
-                    key={movie.imdbID}
-                    onClick={() => navigate({ to: '/movies/$movieId', params: { movieId: movie.imdbID } })}
-                    className="flex gap-4 bg-[#1c2228] rounded-md overflow-hidden cursor-pointer hover:shadow-lg hover:ring-1 hover:ring-[#00e054] transition-all duration-200 p-3"
-                  >
-                    <div className="w-16 md:w-20 flex-shrink-0">
-                      {movie.Poster && movie.Poster !== 'N/A' && (
-                        <img
-                          src={movie.Poster}
-                          alt={movie.Title}
-                          className="w-full h-24 md:h-28 object-cover rounded"
-                        />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-sm md:text-base mb-1 group-hover:text-[#00e054] transition-colors">
-                        {movie.Title}
-                      </h3>
-                      <div className="flex items-center gap-2 text-xs text-[#9ab] mb-2">
-                        <span>{movie.Year}</span>
-                        {movie.imdbRating && movie.imdbRating !== 'N/A' && (
-                          <>
-                            <span>•</span>
-                            <span className="flex items-center">
-                              <Star className="h-3 w-3 mr-1 fill-current text-[#00e054]" />
-                              {movie.imdbRating}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {getMovieGenres(movie.Genre).map((genre, idx) => (
-                          <span
-                            key={idx}
-                            className={`px-2 py-0.5 text-[10px] rounded border ${getCategoryColor(genre)}`}
-                          >
-                            {genre}
-                          </span>
-                        ))}
-                        <button
-                          onClick={(e) => toggleFavorite(movie, e)}
-                          className={`ml-auto p-1.5 rounded-full transition-colors ${
-                            isFavorite(movie.imdbID)
-                              ? 'bg-[#00e054] text-black'
-                              : 'bg-[#2c3440] text-white hover:bg-[#00e054] hover:text-black'
-                          }`}
-                        >
-                          <Heart className={`h-3 w-3 ${isFavorite(movie.imdbID) ? 'fill-current' : ''}`} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {filteredMovies.length === 0 && (
               <div className="text-center py-16">
-                <Film className="h-16 w-16 text-[#9ab] mx-auto mb-4" />
-                <p className="text-[#9ab] text-lg mb-2">
-                  Aucun film trouvé
-                </p>
-                <p className="text-[#9ab] text-sm">
-                  {searchTerm.length >= 2 
-                    ? 'Essayez avec d\'autres mots-clés'
-                    : 'Essayez avec d\'autres catégories'}
-                </p>
-                {(searchTerm || selectedCategory !== 'all') && (
-                  <button
-                    onClick={() => {
-                      setSearchTerm('')
-                      setSelectedCategory('all')
-                    }}
-                    className="mt-4 px-4 py-2 bg-[#00e054] text-black rounded-md hover:bg-[#00cc45] transition-colors"
-                  >
-                    Réinitialiser les filtres
-                  </button>
-                )}
+                <p className={`${textSecondary} text-lg`}>Aucun film trouvé</p>
               </div>
             )}
           </div>
-        </main>
-      </div>
+        ) : (
+          // Catégories - fetch from API
+          categories.map((category, index) => (
+            <MovieSection 
+              key={index} 
+              title={category.title} 
+              searchTerm={category.search}
+              apiKey={apiKey}
+              isDark={isDark}
+              page={category.page}
+            />
+          ))
+        )}
+      </main>
     </div>
   )
 }
