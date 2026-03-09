@@ -1,4 +1,4 @@
-import pool from "../../database/dbConnect.js";
+import pool from "../../../database/dbConnect.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import speakeasy from "speakeasy";
