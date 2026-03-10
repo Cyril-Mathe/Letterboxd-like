@@ -2,13 +2,14 @@ import express from "express";
 import { getUsers, getUserById, createUser, updateUser, deleteUser } from "../controllers/User/users.ts";
 import { getMovies, getMovieById, createMovie, updateMovie, deleteMovie } from "../controllers/Movies/movies.ts";
 import { getReviews, getReviewById, createReview, updateReview, deleteReview } from "../controllers/Reviews/reviews.ts";
-import { register, login } from "../controllers/User/auth.ts";
+import { register, login, me } from "../controllers/User/auth.ts";
 
 const router = express.Router();
 
 // auth routes
 router.post('/register', register);
 router.post('/login', login);
+router.get('/me', me);
 
 // routes users
 router.get('/users', getUsers);

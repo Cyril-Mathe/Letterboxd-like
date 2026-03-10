@@ -29,43 +29,53 @@ const RootLayout = () => {
     localStorage.setItem('cineconnect_theme', newTheme ? 'dark' : 'light');
   };
 
-  const login = (email, password) => {
-    const savedUsers = localStorage.getItem('cineconnect_users');
-    if (savedUsers) {
-      const users = JSON.parse(savedUsers);
-      const foundUser = users.find((u) => u.email === email && u.password === password);
-      if (foundUser) {
-        const userInfo = { id: foundUser.id, username: foundUser.username, email: foundUser.email };
-        setUser(userInfo);
-        localStorage.setItem('cineconnect_user', JSON.stringify(userInfo));
-        return true;
+  const login = async (identifier, password) => {
+    try {
+      const response = await fetch('http://localhost:3000/api/v1/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier, password })
+      });
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('refreshToken', data.refreshToken);
+        // Fetch user data
+        const meResponse = await fetch('http://localhost:3000/api/v1/me', {
+          headers: { 'Authorization': `Bearer ${data.token}` }
+        });
+        if (meResponse.ok) {
+          const meData = await meResponse.json();
+          setUser(meData.user);
+          localStorage.setItem('cineconnect_user', JSON.stringify(meData.user));
+          return true;
+        }
       }
+    } catch (err) {
+      console.error('Login error:', err);
     }
     return false;
   };
 
-  const register = (username, email, password) => {
-    const savedUsers = localStorage.getItem('cineconnect_users');
-    const users = savedUsers ? JSON.parse(savedUsers) : [];
-
-    if (users.find((u) => u.email === email)) {
-      return false;
+  const register = async (username, email, password) => {
+    try {
+      const response = await fetch('http://localhost:3000/api/v1/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, email, password })
+      });
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('refreshToken', data.refreshToken);
+        setUser(data.user);
+        localStorage.setItem('cineconnect_user', JSON.stringify(data.user));
+        return true;
+      }
+    } catch (err) {
+      console.error('Register error:', err);
     }
-
-    const newUser = {
-      id: Date.now().toString(),
-      username,
-      email,
-      password,
-    };
-
-    users.push(newUser);
-    localStorage.setItem('cineconnect_users', JSON.stringify(users));
-
-    const userInfo = { id: newUser.id, username: newUser.username, email: newUser.email };
-    setUser(userInfo);
-    localStorage.setItem('cineconnect_user', JSON.stringify(userInfo));
-    return true;
+    return false;
   };
 
   const logout = () => {
