@@ -3,6 +3,7 @@ import { useContext, useState } from 'react'
 import { AuthContext, ThemeContext } from '../contexts'
 import { Link } from '@tanstack/react-router'
 import { Film, User, Mail, Lock, UserPlus } from 'lucide-react'
+import toast, { Toaster } from 'react-hot-toast';
 
 export const Route = createFileRoute('/register')({
   component: Register,
@@ -13,7 +14,6 @@ function Register() {
   const { register } = useContext(AuthContext)
   const { isDark } = useContext(ThemeContext) || { isDark: true }
   const [formData, setFormData] = useState({ username: '', email: '', password: '', confirmPassword: '' })
-  const [error, setError] = useState('')
 
   // Theme colors
   const bgMain = isDark ? 'bg-[#14181c]' : 'bg-gray-50'
@@ -28,17 +28,18 @@ function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setError('')
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match')
+      toast.error('Passwords do not match')
       return
     }
 
     if (await register(formData.username, formData.email, formData.password)) {
+      toast.success('Registration successful')
+      await new Promise(resolve => setTimeout(resolve, 1500)) // wait for toast to show
       navigate({ to: '/login' })
     } else {
-      setError('Registration failed')
+      toast.error('Registration failed')
     }
   }
 
@@ -48,6 +49,60 @@ function Register() {
 
   return (
     <div className={`min-h-screen ${bgMain} flex items-center justify-center px-4 transition-colors duration-300`}>
+      <Toaster
+                position="top-center"
+                containerStyle={{
+                    top: '75%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                }}
+                toastOptions={{
+                    duration: 4000,
+                    style: {
+                        background: '#363636',
+                        color: '#fff',
+                        fontSize: '16px',
+                        fontWeight: '500',
+                        padding: '16px 24px',
+                        borderRadius: '12px',
+                        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
+                        position: 'relative',
+                    },
+                    success: {
+                        duration: 3000,
+                        style: {
+                            background: '#10b981',
+                            color: '#fff',
+                        },
+                        iconTheme: {
+                            primary: '#fff',
+                            secondary: '#10b981',
+                        },
+                    },
+                    error: {
+                        duration: 5000,
+                        style: {
+                            background: '#ef4444',
+                            color: '#fff',
+                        },
+                        iconTheme: {
+                            primary: '#fff',
+                            secondary: '#ef4444',
+                        },
+                    },
+                    loading: {
+                        duration: 2000,
+                        style: {
+                            background: '#3b82f6',
+                            color: '#fff',
+                        },
+                        iconTheme: {
+                            primary: '#fff',
+                            secondary: '#3b82f6',
+                        },
+                    }
+                }}
+            />
       <div className="max-w-md w-full">
         {/* Logo */}
         <div className="text-center mb-8">
@@ -147,10 +202,6 @@ function Register() {
                 />
               </div>
             </div>
-
-            {error && (
-              <p className="text-red-500 text-sm">{error}</p>
-            )}
 
             {/* Submit */}
             <button

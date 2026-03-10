@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useContext, useState } from 'react'
 import { AuthContext, ThemeContext } from '../contexts'
+import toast, { Toaster } from 'react-hot-toast';
 
 export const Route = createFileRoute('/login')({
   component: Login,
@@ -11,7 +12,6 @@ function Login() {
   const { login } = useContext(AuthContext)
   const { isDark } = useContext(ThemeContext) || { isDark: true }
   const [formData, setFormData] = useState({ identifier: '', password: '' })
-  const [error, setError] = useState('')
 
   // Theme colors
   const bgMain = isDark ? 'bg-[#14181c]' : 'bg-gray-50'
@@ -26,12 +26,13 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setError('')
 
     if (await login(formData.identifier, formData.password)) {
+      toast.success('Connexion réussie')
+      await new Promise(resolve => setTimeout(resolve, 1500)) // wait for toast to show
       navigate({ to: '/' })
     } else {
-      setError('Identifiant ou mot de passe incorrect')
+      toast.error('Identifiant ou mot de passe incorrect')
     }
   }
 
@@ -41,6 +42,60 @@ function Login() {
 
   return (
     <div className={`min-h-screen flex items-center justify-center ${bgMain} ${textMain} transition-colors duration-300`}>
+      <Toaster
+                position="top-center"
+                containerStyle={{
+                    top: '75%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                }}
+                toastOptions={{
+                    duration: 4000,
+                    style: {
+                        background: '#363636',
+                        color: '#fff',
+                        fontSize: '16px',
+                        fontWeight: '500',
+                        padding: '16px 24px',
+                        borderRadius: '12px',
+                        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
+                        position: 'relative',
+                    },
+                    success: {
+                        duration: 3000,
+                        style: {
+                            background: '#10b981',
+                            color: '#fff',
+                        },
+                        iconTheme: {
+                            primary: '#fff',
+                            secondary: '#10b981',
+                        },
+                    },
+                    error: {
+                        duration: 5000,
+                        style: {
+                            background: '#ef4444',
+                            color: '#fff',
+                        },
+                        iconTheme: {
+                            primary: '#fff',
+                            secondary: '#ef4444',
+                        },
+                    },
+                    loading: {
+                        duration: 2000,
+                        style: {
+                            background: '#3b82f6',
+                            color: '#fff',
+                        },
+                        iconTheme: {
+                            primary: '#fff',
+                            secondary: '#3b82f6',
+                        },
+                    }
+                }}
+            />
       <div className={`max-w-md w-full space-y-8 p-8 rounded-lg shadow-lg ${bgCard}`}>
         <div>
           <h2 className={`mt-6 text-center text-3xl font-extrabold ${textMain}`}>
@@ -88,12 +143,6 @@ function Login() {
               />
             </div>
           </div>
-
-          {error && (
-            <div className={`${accentColor} text-sm text-center`}>
-              {error}
-            </div>
-          )}
 
           <div>
             <button
