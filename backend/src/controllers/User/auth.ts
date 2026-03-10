@@ -13,7 +13,9 @@ export async function register(req: Request, res: Response) {
         }
         const hashedPassword = await bcrypt.hash(password, 10);
         const [user] = await db.insert(usersTable).values({ username, email, password: hashedPassword }).returning();
-        res.status(201).json({ user });
+        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET as string, { expiresIn: "1h" });
+        const refreshToken = jwt.sign({ id: user.id }, process.env.JWT_REFRESH_SECRET as string, { expiresIn: "1d" });
+        res.status(201).json({ user, token, refreshToken });
     } catch (error) {
         res.status(500).json({ error: "Error registering user" });
     }
@@ -21,11 +23,16 @@ export async function register(req: Request, res: Response) {
 
 export async function login(req: Request, res: Response) {
     try {
-        const { email, password } = req.body;
-        if (!email || !password) {
-            return res.status(400).json({ error: "Email and password are required" });
+        const { identifier, password } = req.body;
+        if (!identifier || !password) {
+            return res.status(400).json({ error: "Identifier and password are required" });
         }
-        const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email));
+        let user;
+        if (identifier.includes('@')) {
+            [user] = await db.select().from(usersTable).where(eq(usersTable.email, identifier));
+        } else {
+            [user] = await db.select().from(usersTable).where(eq(usersTable.username, identifier));
+        }
         if (!user) {
             return res.status(404).json({ error: "User not found" });
         }
@@ -38,5 +45,18 @@ export async function login(req: Request, res: Response) {
         res.json({ token, refreshToken });
     } catch (error) {
         res.status(500).json({ error: "Error logging in" });
+    }
+}
+
+export async function me(req: Request, res: Response) {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: 'No token' });
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { id: string };
+        const [user] = await db.select().from(usersTable).where(eq(usersTable.id, decoded.id));
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        res.json({ user: { id: user.id, username: user.username, email: user.email } });
+    } catch (err) {
+        res.status(401).json({ error: 'Invalid token' });
     }
 }

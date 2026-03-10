@@ -26,7 +26,7 @@ function Register() {
   const inputBg = isDark ? 'bg-[#14181c]' : 'bg-gray-50'
   const placeholderColor = isDark ? 'placeholder-[#9ab]' : 'placeholder-gray-400'
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
 
@@ -35,10 +35,10 @@ function Register() {
       return
     }
 
-    if (register(formData.username, formData.email, formData.password)) {
-      navigate({ to: '/films' })
+    if (await register(formData.username, formData.email, formData.password)) {
+      navigate({ to: '/login' })
     } else {
-      setError('Email already in use')
+      setError('Registration failed')
     }
   }
 

@@ -10,7 +10,7 @@ function Login() {
   const navigate = useNavigate()
   const { login } = useContext(AuthContext)
   const { isDark } = useContext(ThemeContext) || { isDark: true }
-  const [formData, setFormData] = useState({ email: '', password: '' })
+  const [formData, setFormData] = useState({ identifier: '', password: '' })
   const [error, setError] = useState('')
 
   // Theme colors
@@ -24,14 +24,14 @@ function Login() {
   const inputBg = isDark ? 'bg-[#1c2228]' : 'bg-white'
   const placeholderColor = isDark ? 'placeholder-[#9ab]' : 'placeholder-gray-500'
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
 
-    if (login(formData.email, formData.password)) {
+    if (await login(formData.identifier, formData.password)) {
       navigate({ to: '/' })
     } else {
-      setError('Email ou mot de passe incorrect')
+      setError('Identifiant ou mot de passe incorrect')
     }
   }
 
@@ -56,18 +56,18 @@ function Login() {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
-              <label htmlFor="email" className="sr-only">
-                Adresse email
+              <label htmlFor="identifier" className="sr-only">
+                Nom d'utilisateur ou email
               </label>
               <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
+                id="identifier"
+                name="identifier"
+                type="text"
+                autoComplete="username"
                 required
                 className={`relative block w-full px-3 py-2 border ${borderColor} ${inputBg} ${textMain} ${placeholderColor} rounded-t-md focus:outline-none focus:ring-[#00e054] focus:border-[#00e054] focus:z-10 sm:text-sm`}
-                placeholder="Adresse email"
-                value={formData.email}
+                placeholder="Nom d'utilisateur ou email"
+                value={formData.identifier}
                 onChange={handleChange}
               />
             </div>
