@@ -28,8 +28,9 @@ export const moviesTable = pgTable('movies_table', {
 
 export const reviewsTable = pgTable("reviews_table", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => usersTable.id),
+  userId: integer("user_id").notNull().references(() => usersTable.id),
   movieId: integer("movie_id").references(() => moviesTable.id),
+  imdbID: text("imdb_id"),
   rating: numeric("rating", { precision: 2, scale: 1 }).notNull(),
   comment: text("comment"),
   createdAt: timestamp("created_at").notNull().defaultNow(),

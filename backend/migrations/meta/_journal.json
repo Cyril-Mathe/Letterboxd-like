@@ -15,6 +15,13 @@
       "when": 1773067507000,
       "tag": "0001_add_watched_movies",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1773067508000,
+      "tag": "0002_add_imdb_id_to_reviews",
+      "breakpoints": true
     }
   ]
 }
