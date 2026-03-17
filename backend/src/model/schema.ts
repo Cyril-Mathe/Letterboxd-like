@@ -44,8 +44,19 @@ export const reviewsTable = pgTable("reviews_table", {
   }
 );
 
+export const watchedMoviesTable = pgTable('watched_movies_table', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => usersTable.id),
+  imdbID: text('imdb_id').notNull(),
+  title: text('title').notNull(),
+  poster_url: varchar('poster_url', { length: 255 }),
+  watchedAt: timestamp('watched_at').notNull().defaultNow(),
+});
+
 export type User = typeof usersTable.$inferSelect;
 
 export type Movie = typeof moviesTable.$inferSelect;
 
 export type Review = typeof reviewsTable.$inferSelect;
+
+export type WatchedMovie = typeof watchedMoviesTable.$inferSelect;
