@@ -1,10 +1,13 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useContext, useState } from 'react'
+import { useContext, useState, useEffect } from 'react'
 import { Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { AuthContext, ThemeContext } from '../../contexts'
 import { Star, Heart, Eye, ArrowLeft, Calendar, Clock, Film, Users, Trash2 } from 'lucide-react'
 import { MovieCardSkeleton } from '../../components/MovieCard'
+import { checkIfWatched, markAsWatched, unmarkAsWatched } from '../../lib/api/watchedMovies'
+import { getReviewsByImdbID, createReview, deleteReview } from '../../lib/api/reviews'
+import toast, { Toaster } from 'react-hot-toast'
 
 export const Route = createFileRoute('/movies/$movieId')({
   component: FilmDetail,
@@ -38,28 +41,60 @@ function FilmDetail() {
     return saved ? JSON.parse(saved) : []
   })
 
-  // Charger les films vus depuis localStorage
+  // Charger les films vus depuis localStorage (avant la migration vers BDD)
   const [watched, setWatched] = useState(() => {
     const saved = localStorage.getItem(WATCHED_KEY)
-    return saved ? JSON.parse(saved) : []
-  })
-
-  // Charger les reviews depuis localStorage
-  const [reviews, setReviews] = useState(() => {
-    const saved = localStorage.getItem(REVIEWS_KEY)
     return saved ? JSON.parse(saved) : []
   })
 
   // État local pour l'UI
   const [userRating, setUserRating] = useState(0)
   const [userReview, setUserReview] = useState('')
+  const [isWatchedInDb, setIsWatchedInDb] = useState(false)
+  const [isLoadingWatchStatus, setIsLoadingWatchStatus] = useState(true)
+  const [dbReviews, setDbReviews] = useState([])
+  const [isLoadingReviews, setIsLoadingReviews] = useState(true)
 
   // Vérifier si ce film est en favori
   const isFavorite = favorites.some(f => f.imdbID === movieId)
   const isWatchedList = watched.some(w => w.imdbID === movieId)
 
-  // Vérifier si l'utilisateur a déjà écrit un commentaire pour ce film
-  const userReviewForMovie = reviews.find(r => r.imdbID === movieId && r.userId === user?.id)
+  // Charger le statut "regardé" depuis la BDD et les reviews au chargement du composant
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // Charger les reviews de la BDD
+        const reviewsResponse = await getReviewsByImdbID(movieId)
+        setDbReviews(reviewsResponse.data || [])
+      } catch (error) {
+        console.error('Error loading reviews:', error)
+      } finally {
+        setIsLoadingReviews(false)
+      }
+    }
+
+    if (user?.id) {
+      checkWatchedStatus()
+    } else {
+      setIsLoadingWatchStatus(false)
+    }
+
+    loadData()
+  }, [user?.id, movieId])
+
+  const checkWatchedStatus = async () => {
+    try {
+      const response = await checkIfWatched(user?.id, movieId)
+      setIsWatchedInDb(!!response.data)
+    } catch (error) {
+      console.error('Error checking watched status:', error)
+    } finally {
+      setIsLoadingWatchStatus(false)
+    }
+  }
+
+  // Vérifier si l'utilisateur a déjà écrit un avis pour ce film
+  const userReviewForMovie = dbReviews.find(r => r.userId === user?.id)
 
   // Sauvegarder les favoris
   const toggleFavorite = () => {
@@ -78,7 +113,30 @@ function FilmDetail() {
   }
 
   // Sauvegarder les films vus
-  const toggleWatched = () => {
+  const toggleWatched = async () => {
+    if (!user?.id) {
+      toast.error('Veuillez vous connecter pour marquer un film comme vu')
+      return
+    }
+
+    try {
+      if (isWatchedInDb) {
+        // Démarquer comme vu
+        await unmarkAsWatched(user.id, movieId)
+        setIsWatchedInDb(false)
+        toast.success('Film marqué comme non vu')
+      } else {
+        // Marquer comme vu dans la BDD
+        await markAsWatched(user.id, movieId, movie?.Title, movie?.Poster)
+        setIsWatchedInDb(true)
+        toast.success('Film marqué comme vu')
+      }
+    } catch (error) {
+      console.error('Error updating watched status:', error)
+      toast.error('Erreur lors de la mise à jour du statut')
+    }
+
+    // Mantenir aussi le localStorage pour la compatibilité
     let newWatched
     if (isWatchedList) {
       newWatched = watched.filter(w => w.imdbID !== movieId)
@@ -110,66 +168,63 @@ function FilmDetail() {
   })
 
   // Mock reviews pour l'exemple (autres utilisateurs)
-  const mockReviews = [
-    {
-      id: 1,
-      userId: 'other',
-      user: "FilmBuff92",
-      avatar: "https://placehold.co/40x40/4a4a4a/ffffff?text=FB",
-      rating: 5,
-      comment: "Incroyable suite ! Denis Villeneuve a surpassé le premier film. Les effets visuels sont époustouflants et l'histoire est captivante du début à la fin.",
-      date: "2024-03-01",
-      imdbID: movieId
-    },
-    {
-      id: 2,
-      userId: 'other2',
-      user: "Cinephile_Paris",
-      avatar: "https://placehold.co/40x40/5a5a5a/ffffff?text=CP",
-      rating: 4,
-      comment: "Une réalisation magistrale. L'adaptation est enfin à la hauteur. L'interprétation est parfaite.",
-      date: "2024-03-02",
-      imdbID: movieId
-    }
-  ]
+  const mockReviews = []
 
-  // Combiner les reviews locales et mock
-  const allReviews = [...(userReviewForMovie ? [userReviewForMovie] : []), ...mockReviews]
+  // Combiner les reviews de la BDD et mock
+  const allReviews = dbReviews
 
   const handleRating = (rating) => {
     setUserRating(rating)
   }
 
-  const handleSubmitReview = () => {
-    if (!userRating || !userReview.trim() || !user) return
-
-    const newReview = {
-      id: Date.now(),
-      userId: user.id,
-      user: user.username,
-      avatar: `https://placehold.co/40x40/00e054/000000?text=${user.username.charAt(0).toUpperCase()}`,
-      rating: userRating,
-      comment: userReview,
-      date: new Date().toISOString().split('T')[0],
-      imdbID: movieId
+  const handleSubmitReview = async () => {
+    if (!user) {
+      toast.error('Veuillez vous connecter pour laisser un avis')
+      return
     }
 
-    // Sauvegarder dans localStorage
-    const updatedReviews = [...reviews.filter(r => !(r.imdbID === movieId && r.userId === user.id)), newReview]
-    localStorage.setItem(REVIEWS_KEY, JSON.stringify(updatedReviews))
-    setReviews(updatedReviews)
+    if (!isWatchedInDb) {
+      toast.error('Vous devez marquer ce film comme vu avant de laisser un avis')
+      return
+    }
 
-    // Reset form
-    setUserReview('')
-    setUserRating(0)
+    if (!userRating || !userReview.trim()) {
+      toast.error('Veuillez donner une note et un commentaire')
+      return
+    }
+
+    try {
+      await createReview(user.id, movieId, userRating, userReview)
+      
+      // Recharger les reviews depuis la BDD
+      const reviewsResponse = await getReviewsByImdbID(movieId)
+      setDbReviews(reviewsResponse.data || [])
+      
+      // Reset form
+      setUserReview('')
+      setUserRating(0)
+      toast.success('Avis publié avec succès!')
+    } catch (error) {
+      console.error('Error submitting review:', error)
+      toast.error('Erreur lors de la publication de l\'avis')
+    }
   }
 
-  const handleDeleteReview = () => {
+  const handleDeleteReview = async () => {
     if (!user) return
 
-    const updatedReviews = reviews.filter(r => !(r.imdbID === movieId && r.userId === user.id))
-    localStorage.setItem(REVIEWS_KEY, JSON.stringify(updatedReviews))
-    setReviews(updatedReviews)
+    try {
+      await deleteReview(user.id, movieId)
+      
+      // Recharger les reviews depuis la BDD
+      const reviewsResponse = await getReviewsByImdbID(movieId)
+      setDbReviews(reviewsResponse.data || [])
+      
+      toast.success('Avis supprimé avec succès!')
+    } catch (error) {
+      console.error('Error deleting review:', error)
+      toast.error('Erreur lors de la suppression de l\'avis')
+    }
   }
 
   if (isPending) {
@@ -260,14 +315,15 @@ function FilmDetail() {
 
                 <button
                   onClick={toggleWatched}
+                  disabled={isLoadingWatchStatus}
                   className={`w-full flex items-center justify-center px-4 py-2.5 rounded-md transition-all ${
-                    isWatchedList
+                    isWatchedInDb
                       ? `${accentBg} text-black hover:opacity-90`
                       : `${bgCard} ${textMain} ${hoverBg} border ${borderColor}`
-                  }`}
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
-                  <Eye className={`h-5 w-5 mr-2 ${isWatchedList ? 'fill-current' : ''}`} />
-                  {isWatchedList ? 'Marquer comme non vu' : 'Marquer comme vu'}
+                  <Eye className={`h-5 w-5 mr-2 ${isWatchedInDb ? 'fill-current' : ''}`} />
+                  {isLoadingWatchStatus ? 'Chargement...' : (isWatchedInDb ? 'Marquer comme non vu' : 'Marquer comme vu')}
                 </button>
               </div>
 
@@ -392,44 +448,54 @@ function FilmDetail() {
             <div className={`${borderColor} border-t pt-8`}>
               <h2 className="text-xl font-semibold mb-6">Avis</h2>
 
-              {/* Write Review - Only show if user hasn't reviewed yet */}
+              {/* Write Review - Only show if user hasn't reviewed yet AND has watched the movie */}
               {user && !userReviewForMovie && (
-                <div className={`${borderColor} border-b pb-6 mb-6`}>
-                  <h3 className={`text-sm font-medium ${textSecondary} mb-4`}>Écrire un avis</h3>
-                  <div className="mb-4">
-                    <div className="flex gap-1 mb-3">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                          key={star}
-                          onClick={() => handleRating(star)}
-                          className="focus:outline-none"
-                        >
-                          <Star
-                            className={`h-6 w-6 ${
-                              star <= userRating
-                                ? `${accentColor} fill-current`
-                                : isDark ? 'text-[#2c3440]' : 'text-gray-300'
-                            }`}
-                          />
-                        </button>
-                      ))}
+                <>
+                  {!isWatchedInDb && !isLoadingWatchStatus ? (
+                    <div className={`${bgCard} ${borderColor} border rounded-md p-4 mb-6`}>
+                      <p className="text-amber-500 text-sm">
+                        ⚠️ Vous devez marquer ce film comme vu avant de laisser un avis
+                      </p>
                     </div>
-                  </div>
-                  <textarea
-                    value={userReview}
-                    onChange={(e) => setUserReview(e.target.value)}
-                    placeholder="Partagez votre avis..."
-                    className={`w-full px-3 py-2 ${inputBg} ${borderColor} border rounded-md ${textMain} placeholder:${textSecondary} focus:outline-none focus:border-[#00e054] mb-3`}
-                    rows={3}
-                  />
-                  <button
-                    onClick={handleSubmitReview}
-                    disabled={!userRating || !userReview.trim()}
-                    className={`px-4 py-2 ${accentBg} text-black rounded-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium`}
-                  >
-                    Publier
-                  </button>
-                </div>
+                  ) : (
+                    <div className={`${borderColor} border-b pb-6 mb-6`}>
+                      <h3 className={`text-sm font-medium ${textSecondary} mb-4`}>Écrire un avis</h3>
+                      <div className="mb-4">
+                        <div className="flex gap-1 mb-3">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              onClick={() => handleRating(star)}
+                              className="focus:outline-none"
+                            >
+                              <Star
+                                className={`h-6 w-6 ${
+                                  star <= userRating
+                                    ? `${accentColor} fill-current`
+                                    : isDark ? 'text-[#2c3440]' : 'text-gray-300'
+                                }`}
+                              />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <textarea
+                        value={userReview}
+                        onChange={(e) => setUserReview(e.target.value)}
+                        placeholder="Partagez votre avis..."
+                        className={`w-full px-3 py-2 ${inputBg} ${borderColor} border rounded-md ${textMain} placeholder:${textSecondary} focus:outline-none focus:border-[#00e054] mb-3`}
+                        rows={3}
+                      />
+                      <button
+                        onClick={handleSubmitReview}
+                        disabled={!userRating || !userReview.trim()}
+                        className={`px-4 py-2 ${accentBg} text-black rounded-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium`}
+                      >
+                        Publier
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
 
               {/* User's existing review - with delete option */}
@@ -437,12 +503,10 @@ function FilmDetail() {
                 <div className={`${borderColor} border-b pb-6 mb-6 ${bgCard} rounded-md p-4`}>
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <img
-                        src={userReviewForMovie.avatar}
-                        alt={userReviewForMovie.user}
-                        className="w-8 h-8 rounded-full"
-                      />
-                      <span className={`font-medium text-sm ${textMain}`}>{userReviewForMovie.user} <span className={accentColor}>(Vous)</span></span>
+                      <div className="w-8 h-8 rounded-full bg-[#00e054] flex items-center justify-center text-black font-bold text-sm">
+                        {user?.username?.charAt(0).toUpperCase()}
+                      </div>
+                      <span className={`font-medium text-sm ${textMain}`}>{user?.username} <span className={accentColor}>(Vous)</span></span>
                     </div>
                     <button
                       onClick={handleDeleteReview}
@@ -457,7 +521,7 @@ function FilmDetail() {
                       <Star
                         key={star}
                         className={`h-4 w-4 ${
-                          star <= userReviewForMovie.rating
+                          star <= parseInt(userReviewForMovie.rating)
                             ? `${accentColor} fill-current`
                             : isDark ? 'text-[#2c3440]' : 'text-gray-300'
                         }`}
@@ -465,29 +529,27 @@ function FilmDetail() {
                     ))}
                   </div>
                   <p className={`${textMain} text-sm`}>{userReviewForMovie.comment}</p>
-                  <p className={`${textSecondary} text-xs mt-2`}>{userReviewForMovie.date}</p>
+                  <p className={`${textSecondary} text-xs mt-2`}>{new Date(userReviewForMovie.createdAt).toLocaleDateString()}</p>
                 </div>
               )}
 
               {/* Reviews List */}
               <div className="space-y-6">
-                {allReviews.filter(r => r.userId !== user?.id || !user).map((review) => (
+                {allReviews.filter(r => r.userId !== user?.id).map((review) => (
                   <div key={review.id} className={`${borderColor} border-b pb-6 last:border-b-0`}>
                     <div className="flex items-start gap-3">
-                      <img
-                        src={review.avatar}
-                        alt={review.user}
-                        className="w-8 h-8 rounded-full"
-                      />
+                      <div className="w-8 h-8 rounded-full bg-[#2c3440] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                        {review.username?.charAt(0).toUpperCase()}
+                      </div>
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-2">
-                          <span className={`font-medium text-sm ${textMain}`}>{review.user}</span>
+                          <span className={`font-medium text-sm ${textMain}`}>{review.username}</span>
                           <div className="flex">
                             {[1, 2, 3, 4, 5].map((star) => (
                               <Star
                                 key={star}
                                 className={`h-3 w-3 ${
-                                  star <= review.rating
+                                  star <= parseInt(review.rating)
                                     ? `${accentColor} fill-current`
                                     : isDark ? 'text-[#2c3440]' : 'text-gray-300'
                                 }`}
@@ -496,20 +558,42 @@ function FilmDetail() {
                           </div>
                         </div>
                         <p className={`${textSecondary} text-sm`}>{review.comment}</p>
-                        {review.date && <p className={`${textSecondary} text-xs mt-2`}>{review.date}</p>}
+                        {review.createdAt && <p className={`${textSecondary} text-xs mt-2`}>{new Date(review.createdAt).toLocaleDateString()}</p>}
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
 
-              {allReviews.length === 0 && (
+              {isLoadingReviews && (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-[#00e054] mx-auto"></div>
+                </div>
+              )}
+
+              {!isLoadingReviews && allReviews.length === 0 && (
                 <p className={`${textSecondary} text-center py-4`}>Aucun avis pour ce film</p>
               )}
             </div>
           </div>
         </div>
       </div>
+      <Toaster
+        position="top-center"
+        containerStyle={{
+          top: '75%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+        }}
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: isDark ? '#1c2228' : '#ffffff',
+            color: isDark ? '#ffffff' : '#000000',
+            border: `1px solid ${isDark ? '#2c3440' : '#e5e7eb'}`,
+          },
+        }}
+      />
     </div>
   )
 }

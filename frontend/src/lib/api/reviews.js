@@ -6,10 +6,10 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 /**
- * Fetch all reviews
+ * Get all reviews
  */
 export async function getReviews() {
-  const response = await fetch(`${API_BASE_URL}/api/reviews`)
+  const response = await fetch(`${API_BASE_URL}/api/v1/reviews`)
   if (!response.ok) {
     throw new Error('Failed to fetch reviews')
   }
@@ -17,21 +17,21 @@ export async function getReviews() {
 }
 
 /**
- * Fetch reviews for a specific film
+ * Get reviews for a specific movie by imdbID
  */
-export async function getFilmReviews(filmId, page = 1, pageSize = 20) {
-  const response = await fetch(`${API_BASE_URL}/api/reviews/film/${filmId}?page=${page}&pageSize=${pageSize}`)
+export async function getReviewsByImdbID(imdbID) {
+  const response = await fetch(`${API_BASE_URL}/api/v1/reviews/imdb/${imdbID}`)
   if (!response.ok) {
-    throw new Error('Failed to fetch film reviews')
+    throw new Error('Failed to fetch reviews for this movie')
   }
   return response.json()
 }
 
 /**
- * Fetch a single review by ID
+ * Get a single review by ID
  */
 export async function getReview(reviewId) {
-  const response = await fetch(`${API_BASE_URL}/api/reviews/${reviewId}`)
+  const response = await fetch(`${API_BASE_URL}/api/v1/reviews/${reviewId}`)
   if (!response.ok) {
     throw new Error('Failed to fetch review')
   }
@@ -39,26 +39,20 @@ export async function getReview(reviewId) {
 }
 
 /**
- * Fetch reviews by a specific user
- */
-export async function getUserReviews(userId) {
-  const response = await fetch(`${API_BASE_URL}/api/reviews/user/${userId}`)
-  if (!response.ok) {
-    throw new Error('Failed to fetch user reviews')
-  }
-  return response.json()
-}
-
-/**
  * Create a new review
  */
-export async function createReview(input) {
-  const response = await fetch(`${API_BASE_URL}/api/reviews`, {
+export async function createReview(userId, imdbID, rating, comment) {
+  const response = await fetch(`${API_BASE_URL}/api/v1/reviews`, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/json'
     },
-    body: JSON.stringify(input),
+    body: JSON.stringify({
+      userId,
+      imdbID,
+      rating: parseFloat(rating),
+      comment
+    })
   })
   if (!response.ok) {
     throw new Error('Failed to create review')
@@ -67,15 +61,18 @@ export async function createReview(input) {
 }
 
 /**
- * Update an existing review
+ * Update a review
  */
-export async function updateReview(reviewId, input) {
-  const response = await fetch(`${API_BASE_URL}/api/reviews/${reviewId}`, {
+export async function updateReview(reviewId, rating, comment) {
+  const response = await fetch(`${API_BASE_URL}/api/v1/reviews/${reviewId}`, {
     method: 'PUT',
     headers: {
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/json'
     },
-    body: JSON.stringify(input),
+    body: JSON.stringify({
+      rating: parseFloat(rating),
+      comment
+    })
   })
   if (!response.ok) {
     throw new Error('Failed to update review')
@@ -84,79 +81,19 @@ export async function updateReview(reviewId, input) {
 }
 
 /**
- * Delete a review
+ * Delete a review by userId and imdbID
  */
-export async function deleteReview(reviewId) {
-  const response = await fetch(`${API_BASE_URL}/api/reviews/${reviewId}`, {
-    method: 'DELETE',
-  })
-  if (!response.ok) {
-    throw new Error('Failed to delete review')
-  }
-  return response.json()
-}
+export async function deleteReview(userId, imdbID) {
+  const response = await fetch(
+    `${API_BASE_URL}/api/v1/reviews/user/${userId}/${imdbID}`,
+    {
+      method: 'DELETE',
+    }
+  );
 
-/**
- * Like a review
- */
-export async function likeReview(reviewId) {
-  const response = await fetch(`${API_BASE_URL}/api/reviews/${reviewId}/like`, {
-    method: 'POST',
-  })
   if (!response.ok) {
-    throw new Error('Failed to like review')
+    throw new Error('Failed to delete review');
   }
-  return response.json()
-}
 
-/**
- * Get likes for a review
- */
-export async function getReviewLikes(reviewId) {
-  const response = await fetch(`${API_BASE_URL}/api/reviews/${reviewId}/likes`)
-  if (!response.ok) {
-    throw new Error('Failed to fetch review likes')
-  }
-  return response.json()
-}
-
-/**
- * Comment on a review
- */
-export async function commentOnReview(reviewId, commentText) {
-  const response = await fetch(`${API_BASE_URL}/api/reviews/${reviewId}/comments`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ comment: commentText }),
-  })
-  if (!response.ok) {
-    throw new Error('Failed to comment on review')
-  }
-  return response.json()
-}
-
-/**
- * Get comments for a review
- */
-export async function getReviewComments(reviewId) {
-  const response = await fetch(`${API_BASE_URL}/api/reviews/${reviewId}/comments`)
-  if (!response.ok) {
-    throw new Error('Failed to fetch review comments')
-  }
-  return response.json()
-}
-
-/**
- * Delete a comment
- */
-export async function deleteComment(commentId) {
-  const response = await fetch(`${API_BASE_URL}/api/reviews/comments/${commentId}`, {
-    method: 'DELETE',
-  })
-  if (!response.ok) {
-    throw new Error('Failed to delete comment')
-  }
-  return response.json()
+  return response.json();
 }
