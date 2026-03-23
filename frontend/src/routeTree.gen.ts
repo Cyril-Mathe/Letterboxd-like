@@ -13,6 +13,7 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as RecommendationsRouteImport } from './routes/recommendations'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as FriendsRouteImport } from './routes/friends'
 import { Route as FilmsRouteImport } from './routes/films'
 import { Route as DiscussionRouteImport } from './routes/discussion'
 import { Route as AboutRouteImport } from './routes/about'
@@ -37,6 +38,11 @@ const ProfileRoute = ProfileRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FriendsRoute = FriendsRouteImport.update({
+  id: '/friends',
+  path: '/friends',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FilmsRoute = FilmsRouteImport.update({
@@ -70,6 +76,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/discussion': typeof DiscussionRoute
   '/films': typeof FilmsRoute
+  '/friends': typeof FriendsRoute
   '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
   '/recommendations': typeof RecommendationsRoute
@@ -81,6 +88,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/discussion': typeof DiscussionRoute
   '/films': typeof FilmsRoute
+  '/friends': typeof FriendsRoute
   '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
   '/recommendations': typeof RecommendationsRoute
@@ -93,6 +101,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/discussion': typeof DiscussionRoute
   '/films': typeof FilmsRoute
+  '/friends': typeof FriendsRoute
   '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
   '/recommendations': typeof RecommendationsRoute
@@ -106,6 +115,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/discussion'
     | '/films'
+    | '/friends'
     | '/login'
     | '/profile'
     | '/recommendations'
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/discussion'
     | '/films'
+    | '/friends'
     | '/login'
     | '/profile'
     | '/recommendations'
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/discussion'
     | '/films'
+    | '/friends'
     | '/login'
     | '/profile'
     | '/recommendations'
@@ -140,6 +152,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   DiscussionRoute: typeof DiscussionRoute
   FilmsRoute: typeof FilmsRoute
+  FriendsRoute: typeof FriendsRoute
   LoginRoute: typeof LoginRoute
   ProfileRoute: typeof ProfileRoute
   RecommendationsRoute: typeof RecommendationsRoute
@@ -175,6 +188,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/friends': {
+      id: '/friends'
+      path: '/friends'
+      fullPath: '/friends'
+      preLoaderRoute: typeof FriendsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/films': {
@@ -220,6 +240,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   DiscussionRoute: DiscussionRoute,
   FilmsRoute: FilmsRoute,
+  FriendsRoute: FriendsRoute,
   LoginRoute: LoginRoute,
   ProfileRoute: ProfileRoute,
   RecommendationsRoute: RecommendationsRoute,

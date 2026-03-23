@@ -16,6 +16,9 @@ export async function getUsers(req: Request, res: Response) {
 export async function getUserById(req: Request, res: Response) {
     try {
         const id = Number(req.params.id);
+        if (Number.isNaN(id)) {
+            return res.status(400).json({ error: "Invalid user id" });
+        }
         const user = await db.select().from(usersTable).where(eq(usersTable.id, id)).limit(1);
         res.json({ success: true, data: user[0] || null });
     } catch (error) {

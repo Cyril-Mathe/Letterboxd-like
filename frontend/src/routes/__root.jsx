@@ -112,6 +112,7 @@ const RootLayout = () => {
     { name: 'Accueil', href: '/', icon: Home },
     { name: 'Films', href: '/films', icon: Film },
     { name: 'Recommendations', href: '/recommendations', icon: Sparkle },
+    { name: 'Amis', href: '/friends', icon: User, requiresAuth: true },
     { name: 'Profil', href: '/profile', icon: User, requiresAuth: true },
     { name: 'Discussion', href: '/discussion', icon: MessageCircle, requiresAuth: true },
   ]
