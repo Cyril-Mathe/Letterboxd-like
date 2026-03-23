@@ -54,6 +54,13 @@ export const watchedMoviesTable = pgTable('watched_movies_table', {
   watchedAt: timestamp('watched_at').notNull().defaultNow(),
 });
 
+export const followsTable = pgTable('follows_table', {
+  id: serial('id').primaryKey(),
+  followerId: integer('follower_id').notNull().references(() => usersTable.id),
+  followedId: integer('followed_id').notNull().references(() => usersTable.id),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
 export type User = typeof usersTable.$inferSelect;
 
 export type Movie = typeof moviesTable.$inferSelect;
@@ -61,3 +68,5 @@ export type Movie = typeof moviesTable.$inferSelect;
 export type Review = typeof reviewsTable.$inferSelect;
 
 export type WatchedMovie = typeof watchedMoviesTable.$inferSelect;
+
+export type Follow = typeof followsTable.$inferSelect;

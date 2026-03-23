@@ -4,6 +4,8 @@ import { getMovies, getMovieById, createMovie, updateMovie, deleteMovie } from "
 import { getWatchedMovies, checkIfWatched, markAsWatched, unmarkAsWatched } from "../controllers/Movies/watchedMovies.ts";
 import { getReviews, getReviewById, getReviewsByImdbID, createReview, updateReview, deleteReview, deleteReviewByUserAndImdbID } from "../controllers/Reviews/reviews.ts";
 import { register, login, me } from "../controllers/User/auth.ts";
+import { followUser, unfollowUser, getFollowing, getFollowers, searchUsers, checkFollowStatus } from "../controllers/User/follows.ts";
+import { authenticateToken } from "../middleware/auth.ts";
 
 const router = express.Router();
 
@@ -14,6 +16,7 @@ router.get('/me', me);
 
 // routes users
 router.get('/users', getUsers);
+router.get('/users/search', authenticateToken, searchUsers);
 router.get('/users/:id', getUserById);
 router.post('/users', createUser);
 router.put('/users/:id', updateUser);
@@ -40,5 +43,13 @@ router.post('/reviews', createReview);
 router.put('/reviews/:id', updateReview);
 router.delete('/reviews/:id', deleteReview);
 router.delete('/reviews/user/:userId/:imdbID', deleteReviewByUserAndImdbID);
+
+// routes follows
+router.post('/follow', authenticateToken, followUser);
+router.delete('/follow/:followerId/:followedId', authenticateToken, unfollowUser);
+router.get('/following/:userId', authenticateToken, getFollowing);
+router.get('/followers/:userId', authenticateToken, getFollowers);
+router.get('/users/search', authenticateToken, searchUsers);
+router.get('/follow/status/:followerId/:followedId', authenticateToken, checkFollowStatus);
 
 export default router;
