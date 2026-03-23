@@ -61,6 +61,14 @@ export const followsTable = pgTable('follows_table', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
 });
 
+export const messagesTable = pgTable('messages_table', {
+  id: serial('id').primaryKey(),
+  senderId: integer('sender_id').notNull().references(() => usersTable.id),
+  receiverId: integer('receiver_id').notNull().references(() => usersTable.id),
+  content: text('content').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
 export type User = typeof usersTable.$inferSelect;
 
 export type Movie = typeof moviesTable.$inferSelect;

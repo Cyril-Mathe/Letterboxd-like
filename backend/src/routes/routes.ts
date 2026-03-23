@@ -5,6 +5,7 @@ import { getWatchedMovies, checkIfWatched, markAsWatched, unmarkAsWatched } from
 import { getReviews, getReviewById, getReviewsByImdbID, createReview, updateReview, deleteReview, deleteReviewByUserAndImdbID } from "../controllers/Reviews/reviews.ts";
 import { register, login, me } from "../controllers/User/auth.ts";
 import { followUser, unfollowUser, getFollowing, getFollowers, searchUsers, checkFollowStatus } from "../controllers/User/follows.ts";
+import { getConversationHandler } from "../controllers/User/chat.ts";
 import { authenticateToken } from "../middleware/auth.ts";
 
 const router = express.Router();
@@ -51,5 +52,6 @@ router.get('/following/:userId', authenticateToken, getFollowing);
 router.get('/followers/:userId', authenticateToken, getFollowers);
 router.get('/users/search', authenticateToken, searchUsers);
 router.get('/follow/status/:followerId/:followedId', authenticateToken, checkFollowStatus);
+router.get('/chat/history/:userId/:friendId', authenticateToken, getConversationHandler);
 
 export default router;

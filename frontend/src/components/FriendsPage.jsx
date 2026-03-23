@@ -15,6 +15,7 @@ const FriendsPage = () => {
       fetchFollowing()
       fetchFollowers()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
   const fetchFollowing = async () => {
@@ -61,7 +62,13 @@ const FriendsPage = () => {
       });
       if (response.ok) {
         const data = await response.json()
-        setSearchResults(data.filter(u => u.id !== user.id)) // Exclude current user
+        setSearchResults(data
+          .filter(u => u.id !== user.id)
+          .map((u) => ({
+            ...u,
+            isFollowing: following.some(f => f.id === u.id)
+          }))
+        )
       }
     } catch (error) {
       console.error('Error searching users:', error)
@@ -83,7 +90,10 @@ const FriendsPage = () => {
       })
 
       if (response.ok) {
-        fetchFollowing() // Refresh following list
+        await fetchFollowing() // Refresh following list
+        if (searchQuery.trim()) {
+          searchUsers(searchQuery)
+        }
       }
     } catch (error) {
       console.error('Error following user:', error)
@@ -99,7 +109,10 @@ const FriendsPage = () => {
       })
 
       if (response.ok) {
-        fetchFollowing() // Refresh following list
+        await fetchFollowing() // Refresh following list
+        if (searchQuery.trim()) {
+          searchUsers(searchQuery)
+        }
       }
     } catch (error) {
       console.error('Error unfollowing user:', error)
@@ -111,22 +124,6 @@ const FriendsPage = () => {
     setSearchQuery(query)
     searchUsers(query)
   }
-
-  useEffect(() => {
-    const updateSearchResultsWithFollowStatus = async () => {
-      const updatedResults = await Promise.all(
-        searchResults.map(async (u) => ({
-          ...u,
-          isFollowing: await checkFollowStatus(u.id)
-        }))
-      )
-      setSearchResults(updatedResults)
-    }
-
-    if (searchResults.length > 0) {
-      updateSearchResultsWithFollowStatus()
-    }
-  }, [searchResults.length])
 
   return (
     <div className="max-w-6xl mx-auto p-6">
@@ -149,6 +146,7 @@ const FriendsPage = () => {
         </div>
 
         {/* Search Results */}
+        {loading && <p className="mt-2 text-sm text-gray-500">Chargement...</p>}
         {searchResults.length > 0 && (
           <div className="mt-4 bg-white border border-gray-200 rounded-lg shadow-sm max-w-md">
             {searchResults.map((resultUser) => (
