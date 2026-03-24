@@ -140,7 +140,7 @@ const RootLayout = () => {
                   <div className="flex items-center">
                     <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
                       <Film className={`h-6 w-6 ${accentColor}`} />
-                      <span className={`ml-2 text-lg font-semibold ${textMain} tracking-tight`}>CINE CONNECT</span>
+                      <span className={`ml-2 text-lg font-semibold ${textMain} tracking-tight`}>Front Row</span>
                     </Link>
                   </div>
 
