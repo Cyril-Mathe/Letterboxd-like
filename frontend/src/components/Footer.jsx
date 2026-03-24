@@ -17,7 +17,7 @@ const Footer = ({ isDark = true }) => {
           <div>
             <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
               <Film className={`h-6 w-6 ${accentColor}`} />
-              <span className={`ml-2 text-lg font-semibold ${textMain} tracking-tight`}>CINE CONNECT</span>
+              <span className={`ml-2 text-lg font-semibold ${textMain} tracking-tight`}>Front Row</span>
             </Link>
             <p className={`mt-3 ${textSecondary} text-sm`}>
               Votre plateforme de découverte cinématographique. Explorez, notez et partagez vos coups de cœur cinématographiques.
@@ -53,7 +53,7 @@ const Footer = ({ isDark = true }) => {
         </div>
 
         <div className={`mt-8 pt-8 ${borderColor} border-t flex flex-col md:flex-row justify-between items-center`}>
-          <p className={`${textSecondary} text-sm`}>© {currentYear} CINE CONNECT. Tous droits réservés.</p>
+          <p className={`${textSecondary} text-sm`}>© {currentYear} Front Row. Tous droits réservés.</p>
           <p className={`${textSecondary} text-sm mt-2 md:mt-0`}>Propulsé par OMDb API</p>
         </div>
       </div>
