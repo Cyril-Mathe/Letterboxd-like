@@ -1,4 +1,4 @@
-import { createRootRoute, Link, Outlet, redirect } from '@tanstack/react-router'
+import { createRootRoute, Link, Outlet } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { useState } from 'react'
 import { ThemeContext, AuthContext } from '../contexts'
@@ -81,6 +81,9 @@ const RootLayout = () => {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('cineconnect_user');
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    navigate({ to: '/login' });
   };
 
   // Search function - returns multiple results
