@@ -11,25 +11,9 @@ export const usersTable = pgTable('users_table', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
 });
 
-export const moviesTable = pgTable('movies_table', {
-  id: serial('id').primaryKey(),
-  title: text('title').notNull(),
-  year: integer('year'),
-  director: text('director'),
-  actors: text('actors'), // This can be a comma-separated list of actors
-  category: text('category'),
-  synopsis: text('synopsis'),
-  poster_url: varchar('poster_url', { length: 255 }),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at')
-    .notNull()
-    .$onUpdate(() => new Date()),
-});
-
 export const reviewsTable = pgTable("reviews_table", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => usersTable.id),
-  movieId: integer("movie_id").references(() => moviesTable.id),
   imdbID: text("imdb_id"),
   rating: numeric("rating", { precision: 2, scale: 1 }).notNull(),
   comment: text("comment"),
@@ -70,8 +54,6 @@ export const messagesTable = pgTable('messages_table', {
 });
 
 export type User = typeof usersTable.$inferSelect;
-
-export type Movie = typeof moviesTable.$inferSelect;
 
 export type Review = typeof reviewsTable.$inferSelect;
 
