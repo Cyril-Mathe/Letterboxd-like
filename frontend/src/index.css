@@ -1,5 +1,5 @@
-@import "tailwindcss";
 @import url(https://db.onlinewebfonts.com/c/29084c46ef8f17381ccb0ab387273cef?family=NationalGothicW05-Regular);
+@import "tailwindcss";
 body {
   font-family: 'National Gothic W05 Regular', sans-serif;
 }
