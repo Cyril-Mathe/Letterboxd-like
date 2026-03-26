@@ -89,7 +89,7 @@ export async function resetpassword(req: Request, res: Response) {
                                 </p>
                 
                                 <p style="margin: 90px 0;text-align: center">
-                                <a href="http://localhost:5173/reset-password/${user.id}"
+                                <a href="http://localhost:5173/resetpassword/${user.id}"
                                     style="background:#d93025; color:#fff; padding:12px 20px; text-decoration:none; border-radius:12px; font-weight:bold;">
                                     Réinitialisez votre mot de passe
                                 </a>
