@@ -43,6 +43,7 @@ function Profile() {
     moyenneNotes: 0
   })
   const [isLoadingStats, setIsLoadingStats] = useState(true)
+  const [recentActivity, setRecentActivity] = useState([])
 
   // Theme colors
   const bgMain = isDark ? 'bg-[#14181c]' : 'bg-gray-50'
@@ -55,7 +56,7 @@ function Profile() {
   const inputBg = isDark ? 'bg-[#1c2228]' : 'bg-white'
   const hoverBg = isDark ? 'bg-[#2c3440]' : 'bg-gray-100'
 
-  // Charger les statistiques de l'utilisateur
+  // Charger les statistiques et l'activité récente de l'utilisateur
   useEffect(() => {
     const loadStats = async () => {
       try {
@@ -97,6 +98,38 @@ function Profile() {
           filmsFavoris: favoriteCount,
           moyenneNotes: parseFloat(moyenneNotes) || 0
         })
+
+        // Construire l'activité récente à partir des vraies données
+        const activities = []
+
+        // Ajouter les avis
+        userReviews.forEach((review) => {
+          activities.push({
+            id: `review-${review.id}`,
+            type: 'review',
+            movie: review.movieTitle || review.title || 'Film inconnu',
+            content: `A publié un avis et noté ${review.rating} étoile${review.rating > 1 ? 's' : ''}`,
+            date: review.createdAt || review.date || new Date().toISOString(),
+            icon: Star
+          })
+        })
+
+        // Ajouter les films vus
+        watchedMovies.forEach((watched) => {
+          activities.push({
+            id: `watched-${watched.id}`,
+            type: 'watched',
+            movie: watched.title || 'Film inconnu',
+            content: 'A marqué comme vu',
+            date: watched.watchedAt || watched.createdAt || new Date().toISOString(),
+            icon: Eye
+          })
+        })
+
+        // Trier par date décroissante (les plus récentes en premier) et limiter à 10
+        activities.sort((a, b) => new Date(b.date) - new Date(a.date))
+        setRecentActivity(activities.slice(0, 10))
+
       } catch (error) {
         console.error('Erreur lors de la récupération des statistiques:', error.response?.status, error.message)
         // Garder les valeurs par défaut en cas d'erreur
@@ -110,6 +143,7 @@ function Profile() {
           filmsFavoris: favoriteCount,
           moyenneNotes: 0
         })
+        setRecentActivity([])
       } finally {
         setIsLoadingStats(false)
       }
@@ -119,42 +153,6 @@ function Profile() {
       loadStats()
     }
   }, [user?.id])
-
-  // Activité récente simulée
-  const recentActivity = [
-    {
-      id: 1,
-      type: 'review',
-      movie: 'Dune: Part Two',
-      content: 'A noté 5 étoiles',
-      date: '2024-03-01',
-      icon: Star
-    },
-    {
-      id: 2,
-      type: 'watched',
-      movie: 'Oppenheimer',
-      content: 'A marqué comme vu',
-      date: '2024-02-28',
-      icon: Eye
-    },
-    {
-      id: 3,
-      type: 'review',
-      movie: 'The Batman',
-      content: 'A publié un avis',
-      date: '2024-02-25',
-      icon: MessageCircle
-    },
-    {
-      id: 4,
-      type: 'favorite',
-      movie: 'Parasite',
-      content: 'A ajouté aux favoris',
-      date: '2024-02-20',
-      icon: Star
-    }
-  ]
 
   const handleSave = async () => {
     setIsLoadingSave(true)
