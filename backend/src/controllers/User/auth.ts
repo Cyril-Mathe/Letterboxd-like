@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm"
 import { Request, Response } from "express"
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { sendEmail } from "../Mail/mailControllers";
 
 export async function register(req: Request, res: Response) {
     try {
@@ -58,5 +59,60 @@ export async function me(req: Request, res: Response) {
         res.json({ user: { id: user.id, username: user.username, email: user.email } });
     } catch (err) {
         res.status(401).json({ error: 'Invalid token' });
+    }
+}
+
+export async function resetpassword(req: Request, res: Response) {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ error: "Email is required" });
+        }
+        const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email));
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+        try {
+            await sendEmail(user.email, 
+                            "Demande de réinitialisation de mot de passe",
+                                `
+                                <div style="max-width:600px;margin:auto;font-family:Arial,Helvetica,sans-serif;background:#fdf6f0;padding:30px;border-radius:10px;color:#333;">
+                        
+                                <h2 style="text-align:center;font-size:20px;margin-bottom:20px;border-bottom:1px solid #e0d6ce;padding-bottom:10px;">
+                                Souhaitez vous vraiment changer de mot de passe ?
+                                </h2>
+                
+                                <p style="font-size:14px;line-height:1.6;">
+                                Si vous êtes bien à l'origine de cette demande, vous pouvez changer votre mot de passe en toute tranquillité.<br>
+                                Si ce n’est pas le cas, il est possible que quelqu’un d’autre ait essayé d’accéder à votre compte.<br>
+                                Quoi qu’il en soit, pensez à mettre à jour votre mot de passe de temps en temps : c’est un bon réflexe pour protéger vos informations.
+                                </p>
+                
+                                <p style="margin: 90px 0;text-align: center">
+                                <a href="http://localhost:5173/reset-password/${user.id}"
+                                    style="background:#d93025; color:#fff; padding:12px 20px; text-decoration:none; border-radius:12px; font-weight:bold;">
+                                    Réinitialisez votre mot de passe
+                                </a>
+                                </p>
+                
+                                <table width="100%" style="margin-top:30px;">
+                                <tr>
+                                    <td style="font-size:20px; color:#444;">
+                                    Merci de votre confiance,<br>
+                                    L’équipe <b>Front Row.</b>
+                                    </td>
+                                </tr>
+                                </table>
+                
+                                </div>
+                                `,
+                                );
+        } catch (error) {
+            console.error("Error sending email:", error);
+            return res.status(500).json({ error: "Error sending password reset email" });
+        }
+        res.json({ message: "Password reset link sent" });
+    } catch (error) {
+        res.status(500).json({ error: "Error processing password reset" });
     }
 }

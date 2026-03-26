@@ -2,7 +2,7 @@ import express from "express";
 import { getUsers, getUserById, createUser, updateUser, deleteUser } from "../controllers/User/users.ts";
 import { getWatchedMovies, checkIfWatched, markAsWatched, unmarkAsWatched } from "../controllers/Movies/watchedMovies.ts";
 import { getReviews, getReviewById, getReviewsByImdbID, createReview, updateReview, deleteReview, deleteReviewByUserAndImdbID } from "../controllers/Reviews/reviews.ts";
-import { register, login, me } from "../controllers/User/auth.ts";
+import { register, login, me, resetpassword } from "../controllers/User/auth.ts";
 import { followUser, unfollowUser, getFollowing, getFollowers, searchUsers, checkFollowStatus } from "../controllers/User/follows.ts";
 import { getConversationHandler } from "../controllers/User/chat.ts";
 import { authenticateToken } from "../middleware/auth.ts";
@@ -13,6 +13,7 @@ const router = express.Router();
 router.post('/register', register);
 router.post('/login', login);
 router.get('/me', me);
+router.post('/reset-password', resetpassword);
 
 // routes users
 router.get('/users', getUsers);
