@@ -116,3 +116,27 @@ export async function resetpassword(req: Request, res: Response) {
         res.status(500).json({ error: "Error processing password reset" });
     }
 }
+
+export async function updatePassword(req: Request, res: Response) {
+    try {
+        const { id } = req.params;
+        const { mot_de_passe } = req.body;
+
+        if (!id || !mot_de_passe) {
+            return res.status(400).json({ error: "ID and password are required" });
+        }
+
+        const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id));
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        const hashedPassword = await bcrypt.hash(mot_de_passe, 10);
+        await db.update(usersTable).set({ password: hashedPassword }).where(eq(usersTable.id, id));
+
+        res.status(200).json({ message: "Password updated successfully" });
+    } catch (error) {
+        console.error("Error updating password:", error);
+        res.status(500).json({ error: "Error updating password" });
+    }
+}

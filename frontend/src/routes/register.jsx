@@ -108,7 +108,7 @@ function Register() {
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center">
             <Film className={`h-10 w-10 ${accentColor}`} />
-            <span className={`ml-2 text-2xl font-semibold tracking-tight ${textMain}`}>CineLog</span>
+            <span className={`ml-2 text-2xl font-semibold tracking-tight ${textMain}`}>Front Row</span>
           </Link>
         </div>
 
