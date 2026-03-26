@@ -81,6 +81,11 @@ function Profile() {
             : []
         const userReviews = reviews.filter((r) => r.userId === user.id) || []
 
+        // Récupérer les favoris depuis le localStorage
+        const favoritesData = localStorage.getItem('cineconnect_favorites')
+        const userFavorites = favoritesData ? JSON.parse(favoritesData) : []
+        const favoriteCount = Array.isArray(userFavorites) ? userFavorites.length : 0
+
         // Calculer la moyenne des notes
         const moyenneNotes = userReviews.length > 0
           ? (userReviews.reduce((sum, r) => sum + parseFloat(r.rating), 0) / userReviews.length).toFixed(1)
@@ -89,16 +94,20 @@ function Profile() {
         setStats({
           filmsVus: watchedMovies.length,
           avisPublies: userReviews.length,
-          filmsFavoris: 0, // À implémenter si vous avez une table de favoris
+          filmsFavoris: favoriteCount,
           moyenneNotes: parseFloat(moyenneNotes) || 0
         })
       } catch (error) {
         console.error('Erreur lors de la récupération des statistiques:', error.response?.status, error.message)
         // Garder les valeurs par défaut en cas d'erreur
+        const favoritesData = localStorage.getItem('cineconnect_favorites')
+        const userFavorites = favoritesData ? JSON.parse(favoritesData) : []
+        const favoriteCount = Array.isArray(userFavorites) ? userFavorites.length : 0
+        
         setStats({
           filmsVus: 0,
           avisPublies: 0,
-          filmsFavoris: 0,
+          filmsFavoris: favoriteCount,
           moyenneNotes: 0
         })
       } finally {
