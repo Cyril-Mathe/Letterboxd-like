@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
-import { useContext, useState } from 'react'
+import { useContext, useState, useEffect } from 'react'
 import { ThemeContext, AuthContext } from '../contexts'
 import { User, Star, Eye, MessageCircle, Calendar, Edit, Save, X, Lock } from 'lucide-react'
 import axios from 'axios'
@@ -36,6 +36,13 @@ function Profile() {
   const [passwordError, setPasswordError] = useState({})
   const [isLoadingSave, setIsLoadingSave] = useState(false)
   const [isLoadingPassword, setIsLoadingPassword] = useState(false)
+  const [stats, setStats] = useState({
+    filmsVus: 0,
+    avisPublies: 0,
+    filmsFavoris: 0,
+    moyenneNotes: 0
+  })
+  const [isLoadingStats, setIsLoadingStats] = useState(true)
 
   // Theme colors
   const bgMain = isDark ? 'bg-[#14181c]' : 'bg-gray-50'
@@ -48,13 +55,61 @@ function Profile() {
   const inputBg = isDark ? 'bg-[#1c2228]' : 'bg-white'
   const hoverBg = isDark ? 'bg-[#2c3440]' : 'bg-gray-100'
 
-  // Données simulées pour les statistiques
-  const stats = {
-    filmsVus: 47,
-    avisPublies: 23,
-    filmsFavoris: 12,
-    moyenneNotes: 4.1
-  }
+  // Charger les statistiques de l'utilisateur
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        setIsLoadingStats(true)
+        // Récupérer les films vus avec l'userId en paramètre
+        const watchedResponse = await axios.get(
+          `http://localhost:3000/api/v1/watched-movies?userId=${user.id}`
+        )
+        const watchedMovies = Array.isArray(watchedResponse.data?.data) 
+          ? watchedResponse.data.data 
+          : Array.isArray(watchedResponse.data) 
+            ? watchedResponse.data 
+            : []
+
+        // Récupérer les avis
+        const reviewsResponse = await axios.get(
+          `http://localhost:3000/api/v1/reviews`
+        )
+        const reviews = Array.isArray(reviewsResponse.data?.data)
+          ? reviewsResponse.data.data
+          : Array.isArray(reviewsResponse.data)
+            ? reviewsResponse.data
+            : []
+        const userReviews = reviews.filter((r) => r.userId === user.id) || []
+
+        // Calculer la moyenne des notes
+        const moyenneNotes = userReviews.length > 0
+          ? (userReviews.reduce((sum, r) => sum + parseFloat(r.rating), 0) / userReviews.length).toFixed(1)
+          : 0
+
+        setStats({
+          filmsVus: watchedMovies.length,
+          avisPublies: userReviews.length,
+          filmsFavoris: 0, // À implémenter si vous avez une table de favoris
+          moyenneNotes: parseFloat(moyenneNotes) || 0
+        })
+      } catch (error) {
+        console.error('Erreur lors de la récupération des statistiques:', error.response?.status, error.message)
+        // Garder les valeurs par défaut en cas d'erreur
+        setStats({
+          filmsVus: 0,
+          avisPublies: 0,
+          filmsFavoris: 0,
+          moyenneNotes: 0
+        })
+      } finally {
+        setIsLoadingStats(false)
+      }
+    }
+
+    if (user?.id) {
+      loadStats()
+    }
+  }, [user?.id])
 
   // Activité récente simulée
   const recentActivity = [
