@@ -24,6 +24,34 @@ function Login() {
   const inputBg = isDark ? 'bg-[#1c2228]' : 'bg-white'
   const placeholderColor = isDark ? 'placeholder-[#9ab]' : 'placeholder-gray-500'
 
+  const handleResetpassword = async (e) => {
+        e.preventDefault();
+        const emailInput = document.getElementById("identifier");
+        const email = emailInput?.value;
+
+        if (!email) {
+            toast.error("Veuillez d'abord entrer votre adresse e-mail.");
+            return;
+        }
+
+        try {
+            const res = await fetch(`http://localhost:3000/api/v1/reset-password`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                toast.success("Un mail de réinitialisation vous a été envoyé !");
+            } else {
+                toast.error(data.message);
+            }
+        } catch (err) {
+            console.error("Erreur :", err);
+            toast.error("Erreur de connexion au serveur");
+        }
+    };
+
   const handleSubmit = async (e) => {
     e.preventDefault()
 
@@ -141,6 +169,15 @@ function Login() {
                 value={formData.password}
                 onChange={handleChange}
               />
+            </div>
+            <div>
+              <button
+                type="button"
+                onClick={handleResetpassword}
+                className={`text-sm ${accentColor} hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#00e054]`}
+              >
+                Mot de passe oublié ?
+              </button>
             </div>
           </div>
 

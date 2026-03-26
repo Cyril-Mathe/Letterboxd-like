@@ -1,7 +1,9 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
-import { useContext, useState } from 'react'
+import { useContext, useState, useEffect } from 'react'
 import { ThemeContext, AuthContext } from '../contexts'
-import { User, Star, Eye, MessageCircle, Calendar, Edit, Save, X } from 'lucide-react'
+import { User, Star, Eye, MessageCircle, Calendar, Edit, Save, X, Lock } from 'lucide-react'
+import axios from 'axios'
+import toast, { Toaster } from 'react-hot-toast'
 
 export const Route = createFileRoute('/profile')({
   beforeLoad: ({ context }) => {
@@ -21,10 +23,27 @@ function Profile() {
   const { isDark } = useContext(ThemeContext) || { isDark: true }
   const { user, logout } = useContext(AuthContext)
   const [isEditing, setIsEditing] = useState(false)
+  const [isChangingPassword, setIsChangingPassword] = useState(false)
   const [editForm, setEditForm] = useState({
     username: user?.username || '',
-    bio: 'Passionné de cinéma et de critiques constructives. J\'aime découvrir de nouveaux films et partager mes impressions avec la communauté.'
+    biographie: user?.biographie || 'Passionné de cinéma et de critiques constructives. J\'aime découvrir de nouveaux films et partager mes impressions avec la communauté.'
   })
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  })
+  const [passwordError, setPasswordError] = useState({})
+  const [isLoadingSave, setIsLoadingSave] = useState(false)
+  const [isLoadingPassword, setIsLoadingPassword] = useState(false)
+  const [stats, setStats] = useState({
+    filmsVus: 0,
+    avisPublies: 0,
+    filmsFavoris: 0,
+    moyenneNotes: 0
+  })
+  const [isLoadingStats, setIsLoadingStats] = useState(true)
+  const [recentActivity, setRecentActivity] = useState([])
 
   // Theme colors
   const bgMain = isDark ? 'bg-[#14181c]' : 'bg-gray-50'
@@ -37,66 +56,201 @@ function Profile() {
   const inputBg = isDark ? 'bg-[#1c2228]' : 'bg-white'
   const hoverBg = isDark ? 'bg-[#2c3440]' : 'bg-gray-100'
 
-  // Données simulées pour les statistiques
-  const stats = {
-    filmsVus: 47,
-    avisPublies: 23,
-    filmsFavoris: 12,
-    moyenneNotes: 4.1
-  }
+  // Charger les statistiques et l'activité récente de l'utilisateur
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        setIsLoadingStats(true)
+        // Récupérer les films vus avec l'userId en paramètre
+        const watchedResponse = await axios.get(
+          `http://localhost:3000/api/v1/watched-movies?userId=${user.id}`
+        )
+        const watchedMovies = Array.isArray(watchedResponse.data?.data) 
+          ? watchedResponse.data.data 
+          : Array.isArray(watchedResponse.data) 
+            ? watchedResponse.data 
+            : []
 
-  // Activité récente simulée
-  const recentActivity = [
-    {
-      id: 1,
-      type: 'review',
-      movie: 'Dune: Part Two',
-      content: 'A noté 5 étoiles',
-      date: '2024-03-01',
-      icon: Star
-    },
-    {
-      id: 2,
-      type: 'watched',
-      movie: 'Oppenheimer',
-      content: 'A marqué comme vu',
-      date: '2024-02-28',
-      icon: Eye
-    },
-    {
-      id: 3,
-      type: 'review',
-      movie: 'The Batman',
-      content: 'A publié un avis',
-      date: '2024-02-25',
-      icon: MessageCircle
-    },
-    {
-      id: 4,
-      type: 'favorite',
-      movie: 'Parasite',
-      content: 'A ajouté aux favoris',
-      date: '2024-02-20',
-      icon: Star
+        // Récupérer les avis
+        const reviewsResponse = await axios.get(
+          `http://localhost:3000/api/v1/reviews`
+        )
+        const reviews = Array.isArray(reviewsResponse.data?.data)
+          ? reviewsResponse.data.data
+          : Array.isArray(reviewsResponse.data)
+            ? reviewsResponse.data
+            : []
+        const userReviews = reviews.filter((r) => r.userId === user.id) || []
+
+        // Récupérer les favoris depuis le localStorage
+        const favoritesData = localStorage.getItem('cineconnect_favorites')
+        const userFavorites = favoritesData ? JSON.parse(favoritesData) : []
+        const favoriteCount = Array.isArray(userFavorites) ? userFavorites.length : 0
+
+        // Calculer la moyenne des notes
+        const moyenneNotes = userReviews.length > 0
+          ? (userReviews.reduce((sum, r) => sum + parseFloat(r.rating), 0) / userReviews.length).toFixed(1)
+          : 0
+
+        setStats({
+          filmsVus: watchedMovies.length,
+          avisPublies: userReviews.length,
+          filmsFavoris: favoriteCount,
+          moyenneNotes: parseFloat(moyenneNotes) || 0
+        })
+
+        // Construire l'activité récente à partir des vraies données
+        const activities = []
+
+        // Ajouter les avis
+        userReviews.forEach((review) => {
+          activities.push({
+            id: `review-${review.id}`,
+            type: 'review',
+            movie: review.movieTitle || review.title || 'Film inconnu',
+            content: `A publié un avis et noté ${review.rating} étoile${review.rating > 1 ? 's' : ''}`,
+            date: review.createdAt || review.date || new Date().toISOString(),
+            icon: Star
+          })
+        })
+
+        // Ajouter les films vus
+        watchedMovies.forEach((watched) => {
+          activities.push({
+            id: `watched-${watched.id}`,
+            type: 'watched',
+            movie: watched.title || 'Film inconnu',
+            content: 'A marqué comme vu',
+            date: watched.watchedAt || watched.createdAt || new Date().toISOString(),
+            icon: Eye
+          })
+        })
+
+        // Trier par date décroissante (les plus récentes en premier) et limiter à 10
+        activities.sort((a, b) => new Date(b.date) - new Date(a.date))
+        setRecentActivity(activities.slice(0, 10))
+
+      } catch (error) {
+        console.error('Erreur lors de la récupération des statistiques:', error.response?.status, error.message)
+        // Garder les valeurs par défaut en cas d'erreur
+        const favoritesData = localStorage.getItem('cineconnect_favorites')
+        const userFavorites = favoritesData ? JSON.parse(favoritesData) : []
+        const favoriteCount = Array.isArray(userFavorites) ? userFavorites.length : 0
+        
+        setStats({
+          filmsVus: 0,
+          avisPublies: 0,
+          filmsFavoris: favoriteCount,
+          moyenneNotes: 0
+        })
+        setRecentActivity([])
+      } finally {
+        setIsLoadingStats(false)
+      }
     }
-  ]
 
-  const handleSave = () => {
-    // Simulation de sauvegarde
-    console.log('Sauvegarde du profil:', editForm)
-    setIsEditing(false)
+    if (user?.id) {
+      loadStats()
+    }
+  }, [user?.id])
+
+  const handleSave = async () => {
+    setIsLoadingSave(true)
+    try {
+      const userData = {
+        username: editForm.username,
+        biographie: editForm.biographie
+      }
+      
+      const response = await axios.put(
+        `http://localhost:3000/api/v1/users/${user.id}`,
+        userData
+      )
+
+      if (response.status === 200) {
+        toast.success('Profil mis à jour avec succès!')
+        // Update local user context if needed
+        setIsEditing(false)
+      }
+    } catch (error) {
+      console.error('Erreur:', error)
+      toast.error('Erreur lors de la mise à jour du profil')
+    } finally {
+      setIsLoadingSave(false)
+    }
   }
 
   const handleCancel = () => {
     setEditForm({
       username: user?.username || '',
-      bio: 'Passionné de cinéma et de critiques constructives. J\'aime découvrir de nouveaux films et partager mes impressions avec la communauté.'
+      biographie: user?.biographie || 'Passionné de cinéma et de critiques constructives. J\'aime découvrir de nouveaux films et partager mes impressions avec la communauté.'
     })
     setIsEditing(false)
   }
 
+  const handleChangePassword = async (e) => {
+    e.preventDefault()
+    setPasswordError({})
+
+    // Validation
+    if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
+      setPasswordError({ all: 'Tous les champs sont requis' })
+      return
+    }
+
+    if (passwordForm.newPassword.length < 2) {
+      setPasswordError({ new: 'Le mot de passe doit contenir au moins 2 caractères' })
+      return
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordError({ confirm: 'Les mots de passe ne correspondent pas' })
+      return
+    }
+
+    setIsLoadingPassword(true)
+    try {
+      // Vérifier le mot de passe actuel en essayant de login
+      const loginResponse = await axios.post(
+        'http://localhost:3000/api/v1/login',
+        {
+          identifier: user.email,
+          password: passwordForm.currentPassword
+        }
+      )
+
+      if (loginResponse.status === 200) {
+        // Mot de passe actuel correct, mise à jour du nouveau
+        const updateResponse = await axios.put(
+          `http://localhost:3000/api/v1/reset-password/${user.id}`,
+          { mot_de_passe: passwordForm.newPassword }
+        )
+
+        if (updateResponse.status === 200) {
+          toast.success('Mot de passe modifié avec succès!')
+          setIsChangingPassword(false)
+          setPasswordForm({
+            currentPassword: '',
+            newPassword: '',
+            confirmPassword: ''
+          })
+        }
+      }
+    } catch (error) {
+      console.error('Erreur:', error)
+      if (error.response?.status === 401) {
+        setPasswordError({ current: 'Mot de passe actuel incorrect' })
+      } else {
+        toast.error('Erreur lors de la modification du mot de passe')
+      }
+    } finally {
+      setIsLoadingPassword(false)
+    }
+  }
+
   return (
     <div className={`min-h-screen ${bgMain} ${textMain} transition-colors duration-300`}>
+      <Toaster position="top-right" />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header du profil */}
         <div className={`${bgCard} rounded-lg p-6 mb-8 shadow-lg`}>
@@ -123,25 +277,29 @@ function Profile() {
                     onChange={(e) => setEditForm({...editForm, username: e.target.value})}
                     className={`w-full px-3 py-2 border rounded-lg ${inputBg} ${borderColor} ${textMain} focus:outline-none focus:ring-2 focus:ring-[#00e054]`}
                     placeholder="Nom d'utilisateur"
+                    disabled={isLoadingSave}
                   />
                   <textarea
-                    value={editForm.bio}
-                    onChange={(e) => setEditForm({...editForm, bio: e.target.value})}
+                    value={editForm.biographie}
+                    onChange={(e) => setEditForm({...editForm, biographie: e.target.value})}
                     className={`w-full px-3 py-2 border rounded-lg ${inputBg} ${borderColor} ${textMain} focus:outline-none focus:ring-2 focus:ring-[#00e054]`}
                     rows={3}
                     placeholder="Biographie"
+                    disabled={isLoadingSave}
                   />
                   <div className="flex space-x-2">
                     <button
                       onClick={handleSave}
-                      className={`px-4 py-2 ${accentBg} text-black rounded-lg hover:opacity-90 transition-colors flex items-center`}
+                      disabled={isLoadingSave}
+                      className={`px-4 py-2 ${accentBg} text-black rounded-lg hover:opacity-90 transition-colors flex items-center disabled:opacity-50`}
                     >
                       <Save className="h-4 w-4 mr-2" />
-                      Sauvegarder
+                      {isLoadingSave ? 'Sauvegarde...' : 'Sauvegarder'}
                     </button>
                     <button
                       onClick={handleCancel}
-                      className={`px-4 py-2 border ${borderColor} ${textSecondary} rounded-lg ${hoverBg} transition-colors flex items-center`}
+                      disabled={isLoadingSave}
+                      className={`px-4 py-2 border ${borderColor} ${textSecondary} rounded-lg ${hoverBg} transition-colors flex items-center disabled:opacity-50`}
                     >
                       <X className="h-4 w-4 mr-2" />
                       Annuler
@@ -152,20 +310,122 @@ function Profile() {
                 <>
                   <h1 className="text-3xl font-bold mb-2">{user?.username}</h1>
                   <p className={`mb-4 ${textSecondary}`}>
-                    Passionné de cinéma et de critiques constructives. J'aime découvrir de nouveaux films et partager mes impressions avec la communauté.
+                    {editForm.biographie}
                   </p>
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className={`px-4 py-2 ${accentBg} text-black rounded-lg hover:opacity-90 transition-colors flex items-center`}
-                  >
-                    <Edit className="h-4 w-4 mr-2" />
-                    Modifier le profil
-                  </button>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className={`px-4 py-2 ${accentBg} text-black rounded-lg hover:opacity-90 transition-colors flex items-center`}
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Modifier le profil
+                    </button>
+                    <button
+                      onClick={() => setIsChangingPassword(true)}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+                    >
+                      <Lock className="h-4 w-4 mr-2" />
+                      Changer le mot de passe
+                    </button>
+                  </div>
                 </>
               )}
             </div>
           </div>
         </div>
+
+        {/* Modal Changer mot de passe */}
+        {isChangingPassword && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className={`${bgCard} rounded-lg p-6 max-w-md w-full shadow-xl`}>
+              <h2 className="text-2xl font-bold mb-4 flex items-center">
+                <Lock className="h-6 w-6 mr-2" />
+                Changer le mot de passe
+              </h2>
+
+              <form onSubmit={handleChangePassword} className="space-y-4">
+                <div>
+                  <label className={`block text-sm font-medium ${textMain} mb-1`}>
+                    Mot de passe actuel
+                  </label>
+                  <input
+                    type="password"
+                    value={passwordForm.currentPassword}
+                    onChange={(e) => setPasswordForm({...passwordForm, currentPassword: e.target.value})}
+                    className={`w-full px-3 py-2 border rounded-lg ${inputBg} ${borderColor} ${textMain} focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50`}
+                    placeholder="Votre mot de passe actuel"
+                    disabled={isLoadingPassword}
+                  />
+                  {passwordError.current && (
+                    <p className="text-red-500 text-sm mt-1">{passwordError.current}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium ${textMain} mb-1`}>
+                    Nouveau mot de passe
+                  </label>
+                  <input
+                    type="password"
+                    value={passwordForm.newPassword}
+                    onChange={(e) => setPasswordForm({...passwordForm, newPassword: e.target.value})}
+                    className={`w-full px-3 py-2 border rounded-lg ${inputBg} ${borderColor} ${textMain} focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50`}
+                    placeholder="Nouveau mot de passe"
+                    disabled={isLoadingPassword}
+                  />
+                  {passwordError.new && (
+                    <p className="text-red-500 text-sm mt-1">{passwordError.new}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium ${textMain} mb-1`}>
+                    Confirmer le nouveau mot de passe
+                  </label>
+                  <input
+                    type="password"
+                    value={passwordForm.confirmPassword}
+                    onChange={(e) => setPasswordForm({...passwordForm, confirmPassword: e.target.value})}
+                    className={`w-full px-3 py-2 border rounded-lg ${inputBg} ${borderColor} ${textMain} focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50`}
+                    placeholder="Confirmer le mot de passe"
+                    disabled={isLoadingPassword}
+                  />
+                  {passwordError.confirm && (
+                    <p className="text-red-500 text-sm mt-1">{passwordError.confirm}</p>
+                  )}
+                </div>
+
+                {passwordError.all && (
+                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                    {passwordError.all}
+                  </div>
+                )}
+
+                <div className="flex space-x-2 pt-4">
+                  <button
+                    type="submit"
+                    disabled={isLoadingPassword}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  >
+                    {isLoadingPassword ? 'Modification...' : 'Modifier'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsChangingPassword(false)
+                      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
+                      setPasswordError({})
+                    }}
+                    disabled={isLoadingPassword}
+                    className={`flex-1 px-4 py-2 border ${borderColor} ${textSecondary} rounded-lg ${hoverBg} transition-colors disabled:opacity-50`}
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
         {/* Statistiques */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">

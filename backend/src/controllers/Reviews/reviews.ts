@@ -1,11 +1,28 @@
 import { db } from "../../db"
-import { reviewsTable, usersTable } from "../../model/schema"
+import { reviewsTable, usersTable, watchedMoviesTable } from "../../model/schema"
 import { eq, and } from "drizzle-orm"
 import { Request, Response } from "express"
 
 export async function getReviews(req: Request, res: Response) {
     try {
-        const reviews = await db.select().from(reviewsTable);
+        const reviews = await db
+            .select({
+                id: reviewsTable.id,
+                userId: reviewsTable.userId,
+                imdbID: reviewsTable.imdbID,
+                rating: reviewsTable.rating,
+                comment: reviewsTable.comment,
+                createdAt: reviewsTable.createdAt,
+                title: watchedMoviesTable.title,
+            })
+            .from(reviewsTable)
+            .leftJoin(
+                watchedMoviesTable, 
+                and(
+                    eq(reviewsTable.userId, watchedMoviesTable.userId),
+                    eq(reviewsTable.imdbID, watchedMoviesTable.imdbID)
+                )
+            );
         res.json({ success: true, data: reviews });
     } catch (error) {
         console.error(error);
