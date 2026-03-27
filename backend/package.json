@@ -5,11 +5,33 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon index.js"
+    "start": "nodemon index.js",
+    "dev": "tsx watch index.ts",
+    "test-db": "node tests/test-db.js",
+    "init-db": "node database/init-db.js"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.0.2",
+    "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
+    "dotenv": "^17.3.1",
+    "drizzle-orm": "^0.45.1",
     "express": "^5.2.1",
-    "nodemon": "^3.1.11"
+    "jsonwebtoken": "^9.0.3",
+    "nodemailer": "^7.0.13",
+    "nodemon": "^3.1.11",
+    "pg": "^8.16.3",
+    "socket.io": "^4.8.3",
+    "speakeasy": "^2.0.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/nodemailer": "^7.0.11",
+    "drizzle-kit": "^0.31.9"
   }
 }

@@ -9,12 +9,56 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AboutRouteImport } from './routes/about'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as RecommendationsRouteImport } from './routes/recommendations'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as FriendsRouteImport } from './routes/friends'
+import { Route as FilmsRouteImport } from './routes/films'
+import { Route as ChatRouteImport } from './routes/chat'
+import { Route as R404RouteImport } from './routes/$404'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ResetpasswordIdRouteImport } from './routes/resetpassword/$id'
+import { Route as MoviesMovieIdRouteImport } from './routes/movies/$movieId'
 
-const AboutRoute = AboutRouteImport.update({
-  id: '/about',
-  path: '/about',
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecommendationsRoute = RecommendationsRouteImport.update({
+  id: '/recommendations',
+  path: '/recommendations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FriendsRoute = FriendsRouteImport.update({
+  id: '/friends',
+  path: '/friends',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FilmsRoute = FilmsRouteImport.update({
+  id: '/films',
+  path: '/films',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatRoute = ChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const R404Route = R404RouteImport.update({
+  id: '/$404',
+  path: '/$404',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -22,40 +66,169 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetpasswordIdRoute = ResetpasswordIdRouteImport.update({
+  id: '/resetpassword/$id',
+  path: '/resetpassword/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MoviesMovieIdRoute = MoviesMovieIdRouteImport.update({
+  id: '/movies/$movieId',
+  path: '/movies/$movieId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
+  '/$404': typeof R404Route
+  '/chat': typeof ChatRoute
+  '/films': typeof FilmsRoute
+  '/friends': typeof FriendsRoute
+  '/login': typeof LoginRoute
+  '/profile': typeof ProfileRoute
+  '/recommendations': typeof RecommendationsRoute
+  '/register': typeof RegisterRoute
+  '/movies/$movieId': typeof MoviesMovieIdRoute
+  '/resetpassword/$id': typeof ResetpasswordIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
+  '/$404': typeof R404Route
+  '/chat': typeof ChatRoute
+  '/films': typeof FilmsRoute
+  '/friends': typeof FriendsRoute
+  '/login': typeof LoginRoute
+  '/profile': typeof ProfileRoute
+  '/recommendations': typeof RecommendationsRoute
+  '/register': typeof RegisterRoute
+  '/movies/$movieId': typeof MoviesMovieIdRoute
+  '/resetpassword/$id': typeof ResetpasswordIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
+  '/$404': typeof R404Route
+  '/chat': typeof ChatRoute
+  '/films': typeof FilmsRoute
+  '/friends': typeof FriendsRoute
+  '/login': typeof LoginRoute
+  '/profile': typeof ProfileRoute
+  '/recommendations': typeof RecommendationsRoute
+  '/register': typeof RegisterRoute
+  '/movies/$movieId': typeof MoviesMovieIdRoute
+  '/resetpassword/$id': typeof ResetpasswordIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about'
+  fullPaths:
+    | '/'
+    | '/$404'
+    | '/chat'
+    | '/films'
+    | '/friends'
+    | '/login'
+    | '/profile'
+    | '/recommendations'
+    | '/register'
+    | '/movies/$movieId'
+    | '/resetpassword/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about'
-  id: '__root__' | '/' | '/about'
+  to:
+    | '/'
+    | '/$404'
+    | '/chat'
+    | '/films'
+    | '/friends'
+    | '/login'
+    | '/profile'
+    | '/recommendations'
+    | '/register'
+    | '/movies/$movieId'
+    | '/resetpassword/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/$404'
+    | '/chat'
+    | '/films'
+    | '/friends'
+    | '/login'
+    | '/profile'
+    | '/recommendations'
+    | '/register'
+    | '/movies/$movieId'
+    | '/resetpassword/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AboutRoute: typeof AboutRoute
+  R404Route: typeof R404Route
+  ChatRoute: typeof ChatRoute
+  FilmsRoute: typeof FilmsRoute
+  FriendsRoute: typeof FriendsRoute
+  LoginRoute: typeof LoginRoute
+  ProfileRoute: typeof ProfileRoute
+  RecommendationsRoute: typeof RecommendationsRoute
+  RegisterRoute: typeof RegisterRoute
+  MoviesMovieIdRoute: typeof MoviesMovieIdRoute
+  ResetpasswordIdRoute: typeof ResetpasswordIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recommendations': {
+      id: '/recommendations'
+      path: '/recommendations'
+      fullPath: '/recommendations'
+      preLoaderRoute: typeof RecommendationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/friends': {
+      id: '/friends'
+      path: '/friends'
+      fullPath: '/friends'
+      preLoaderRoute: typeof FriendsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/films': {
+      id: '/films'
+      path: '/films'
+      fullPath: '/films'
+      preLoaderRoute: typeof FilmsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chat': {
+      id: '/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof ChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$404': {
+      id: '/$404'
+      path: '/$404'
+      fullPath: '/$404'
+      preLoaderRoute: typeof R404RouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -65,12 +238,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/resetpassword/$id': {
+      id: '/resetpassword/$id'
+      path: '/resetpassword/$id'
+      fullPath: '/resetpassword/$id'
+      preLoaderRoute: typeof ResetpasswordIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/movies/$movieId': {
+      id: '/movies/$movieId'
+      path: '/movies/$movieId'
+      fullPath: '/movies/$movieId'
+      preLoaderRoute: typeof MoviesMovieIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AboutRoute: AboutRoute,
+  R404Route: R404Route,
+  ChatRoute: ChatRoute,
+  FilmsRoute: FilmsRoute,
+  FriendsRoute: FriendsRoute,
+  LoginRoute: LoginRoute,
+  ProfileRoute: ProfileRoute,
+  RecommendationsRoute: RecommendationsRoute,
+  RegisterRoute: RegisterRoute,
+  MoviesMovieIdRoute: MoviesMovieIdRoute,
+  ResetpasswordIdRoute: ResetpasswordIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

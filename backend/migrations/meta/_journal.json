@@ -1,0 +1,34 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1773067506935,
+      "tag": "0000_gray_machine_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1773067507000,
+      "tag": "0001_add_watched_movies",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1773067508000,
+      "tag": "0002_add_imdb_id_to_reviews",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1774274043736,
+      "tag": "0003_past_kate_bishop",
+      "breakpoints": true
+    }
+  ]
+}
