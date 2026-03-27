@@ -14,6 +14,7 @@ export async function getReviews(req: Request, res: Response) {
                 comment: reviewsTable.comment,
                 createdAt: reviewsTable.createdAt,
                 title: watchedMoviesTable.title,
+                username: usersTable.username,
             })
             .from(reviewsTable)
             .leftJoin(
@@ -22,7 +23,8 @@ export async function getReviews(req: Request, res: Response) {
                     eq(reviewsTable.userId, watchedMoviesTable.userId),
                     eq(reviewsTable.imdbID, watchedMoviesTable.imdbID)
                 )
-            );
+            )
+            .leftJoin(usersTable, eq(reviewsTable.userId, usersTable.id));
         res.json({ success: true, data: reviews });
     } catch (error) {
         console.error(error);

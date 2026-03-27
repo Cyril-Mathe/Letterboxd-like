@@ -97,11 +97,49 @@ const HomePage = () => {
     return searchResults.broad || []
   }, [searchResults, searchTerm])
 
-  const recentReviews = [
-    { user: "FilmBuff92", movie: "Dune: Part Two", rating: 5, comment: "Incroyable suite, la réalisation est magistrale!", time: "2h ago" },
-    { user: "Cinephile_Paris", movie: "Oppenheimer", rating: 4, comment: "Nolan à son meilleur niveau.", time: "4h ago" },
-    { user: "MovieLover", movie: "The Batman", rating: 4, comment: "Dark et intense, parfait pour les fans de comics.", time: "6h ago" }
-  ]
+  const { data: allReviews } = useQuery({
+    queryKey: ['reviews'],
+    queryFn: async () => {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api/v1/reviews`)
+      if (!res.ok) throw new Error('Failed to fetch reviews')
+      const data = await res.json()
+      return data.data || []
+    },
+    staleTime: 1000 * 60 * 1,
+    retry: 1,
+  })
+
+  const formatTimeAgo = (dateString) => {
+    if (!dateString) return 'recently'
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffMs = now - date
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
+    
+    if (diffMins < 1) return 'now'
+    if (diffMins < 60) return `${diffMins}m ago`
+    if (diffHours < 24) return `${diffHours}h ago`
+    if (diffDays < 7) return `${diffDays}d ago`
+    return date.toLocaleDateString()
+  }
+
+  const recentReviews = useMemo(() => {
+    if (!allReviews) return []
+    return allReviews
+      .slice()
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 3)
+      .map(review => ({
+        user: review.username || 'Anonymous',
+        movie: review.title || 'Unknown',
+        rating: review.rating || 0,
+        comment: review.comment || '',
+        time: formatTimeAgo(review.createdAt),
+        createdAt: review.createdAt
+      }))
+  }, [allReviews])
 
   const handleViewDetails = (movieId) => {
     navigate({ to: '/movies/$movieId', params: { movieId } })
