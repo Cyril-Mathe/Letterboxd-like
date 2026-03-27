@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext, useMemo, useRef } from 'react'
-import { AuthContext, ThemeContext } from '../contexts'
+import { AuthContext, ThemeContext } from '../lib/fonctions/contexts'
 import { io } from 'socket.io-client'
 import { MessageSquare, Send, Users } from 'lucide-react'
 

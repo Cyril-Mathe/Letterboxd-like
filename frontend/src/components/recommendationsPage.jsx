@@ -1,7 +1,7 @@
 import { useState, useContext } from "react";
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from "@tanstack/react-router";
-import { ThemeContext } from './contexts';
+import { ThemeContext } from '../lib/fonctions/contexts';
 
 const movieTitles = {
   guerre: ['come%20and%20see', 'apocalypse%20now', 'paths%20of%20glory', 'full%20metal%20jacket', 'fury', 'dunkirk', 'zone%20of%20interest', 'inglourious%20basterds'],

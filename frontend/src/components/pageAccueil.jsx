@@ -1,9 +1,9 @@
 import { useContext, useMemo, useState } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { AuthContext, ThemeContext } from './contexts'
+import { AuthContext, ThemeContext } from '../lib/fonctions/contexts'
 import { Star, Film, TrendingUp, Calendar, Play, Heart, Search } from 'lucide-react'
-import Footer from './components/Footer'
+import Footer from './Footer'
 
 const HomePage = () => {
   const { user } = useContext(AuthContext)

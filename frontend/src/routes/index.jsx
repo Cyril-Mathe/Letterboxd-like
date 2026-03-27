@@ -1,7 +1,7 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { useContext } from 'react'
-import HomePage from '../pageAccueil'
-import { AuthContext } from '../contexts'
+import HomePage from '../components/pageAccueil'
+import { AuthContext } from '../lib/fonctions/contexts'
 
 export const Route = createFileRoute('/')({
   beforeLoad: ({ context }) => {

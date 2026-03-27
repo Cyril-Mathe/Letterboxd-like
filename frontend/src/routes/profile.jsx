@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { useContext, useState, useEffect } from 'react'
-import { ThemeContext, AuthContext } from '../contexts'
+import { ThemeContext, AuthContext } from '../lib/fonctions/contexts'
 import { User, Star, Eye, MessageCircle, Calendar, Edit, Save, X, Lock } from 'lucide-react'
 import axios from 'axios'
 import toast, { Toaster } from 'react-hot-toast'

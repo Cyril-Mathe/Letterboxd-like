@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import RecommendationsPage from '../recommendationsPage'
+import RecommendationsPage from '../components/recommendationsPage'
 
 export const Route = createFileRoute('/recommendations')({
   component: RouteComponent,
