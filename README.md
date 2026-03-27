@@ -440,4 +440,4 @@ Ce projet a été développé par :
 | Contributeur | Rôle | Expertise |
 |--------------|------|----------|
 | **Diarra Ben Moriba** | Frontend Lead | React, Vite, TanStack, TailwindCSS |
-| **Cyrile Mathé** | Backend Lead | Node.js, Express, PostgreSQL, Drizzle |
+| **Cyril Mathé** | Backend Lead | Node.js, Express, PostgreSQL, Drizzle |
