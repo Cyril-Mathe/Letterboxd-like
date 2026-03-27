@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from "@tanstack/react-router";
+import { ThemeContext } from './contexts';
 
 const movieTitles = {
   guerre: ['come%20and%20see', 'apocalypse%20now', 'paths%20of%20glory', 'full%20metal%20jacket', 'fury', 'dunkirk', 'zone%20of%20interest', 'inglourious%20basterds'],
@@ -24,6 +25,7 @@ const fetchMoviesByCategory = async (titles, apiKey) => {
 
 export default function RecommendationsPage() {
     const [selectedCategory, setSelectedCategory] = useState("guerre");
+    const { isDark } = useContext(ThemeContext);
     const navigate = useNavigate()
     const apiKey = import.meta.env.VITE_OMDB_API_KEY
     const { isPending, error, data } = useQuery({
@@ -58,7 +60,7 @@ export default function RecommendationsPage() {
           }
         `}</style>
 
-        <div className="mx-[150px] flex flex-wrap gap-2 mt-4">
+        <div className={`mx-[150px] flex flex-wrap gap-2 mt-4 ${isDark ? 'text-white' : ''}`}>
           {Object.keys(movieTitles).map((category) => (
             <button
               key={category}
@@ -66,7 +68,7 @@ export default function RecommendationsPage() {
               className={`flex-1 basis-1/5 px-2 py-1 text-sm border-2 rounded-lg transition-all duration-300 font-semibold ${
                 selectedCategory === category
                   ? 'bg-black text-white border-black btn-active'
-                  : 'border-gray-300 bg-white hover:bg-gray-100 hover:border-gray-600'
+                  : isDark ? 'border-gray-600 bg-[#1c2228] text-white hover:bg-[#2c3440]' : 'border-gray-300 bg-white text-black hover:bg-gray-100 hover:border-gray-600'
               }`}
             >
               {category === 'science-fiction' ? 'SF' : category.charAt(0).toUpperCase() + category.slice(1)}
@@ -77,10 +79,10 @@ export default function RecommendationsPage() {
         <div>
           {selectedCategory === "guerre" && (
             <div className="flex justify-center flex-col">
-              <h3 className="italic text-center m-[15px]">"The horror... the horror"</h3>
+              <h3 className={`italic text-center m-[15px] ${isDark ? 'text-white' : 'text-black'}`}>"The horror... the horror"</h3>
             <div className='h-screen flex justify-center'>
               <div className='w-[700px] flex flex-wrap'>
-                {isPending ? <p>Chargement...</p> : data && (data.filter(Boolean)).map((movie) => (
+                {isPending ? <p className={isDark ? 'text-white' : 'text-black'}>Chargement...</p> : data && (data.filter(Boolean)).map((movie) => (
                   <div className='w-[175px]' key={movie.imdbID}>
                     {movie.Poster && movie.Poster !== 'N/A' && (
                       <div
@@ -95,8 +97,8 @@ export default function RecommendationsPage() {
                         />
                       </div>
                     )}
-                    <p>{movie.Title}</p>
-                    {movie.imdbRating && <p>Note IMDb : {movie.imdbRating}/10</p>}
+                    <p className={isDark ? 'text-white' : 'text-black'}>{movie.Title}</p>
+                    {movie.imdbRating && <p className={isDark ? 'text-white' : 'text-black'}>Note IMDb : {movie.imdbRating}/10</p>}
                   </div>
                 ))}
               </div>
@@ -106,10 +108,10 @@ export default function RecommendationsPage() {
 
           {selectedCategory === "crime" && (
             <div className="flex justify-center flex-col">
-              <h3 className="italic text-center m-[15px]">"I'm gonna make him an offer he can't refuse."</h3>
+              <h3 className={`italic text-center m-[15px] ${isDark ? 'text-white' : 'text-black'}`}>"I'm gonna make him an offer he can't refuse."</h3>
             <div className='h-screen flex justify-center'>
               <div className='w-[700px] flex flex-wrap'>
-                {isPending ? <p>Chargement...</p> : data && (data.filter(Boolean)).map((movie) => (
+                {isPending ? <p className={isDark ? 'text-white' : 'text-black'}>Chargement...</p> : data && (data.filter(Boolean)).map((movie) => (
                   <div className='w-[175px]' key={movie.imdbID}>
                     {movie.Poster && movie.Poster !== 'N/A' && (
                       <div
@@ -124,8 +126,8 @@ export default function RecommendationsPage() {
                         />
                       </div>
                     )}
-                    <p>{movie.Title}</p>
-                    {movie.imdbRating && <p>Note IMDb : {movie.imdbRating}/10</p>}
+                    <p className={isDark ? 'text-white' : 'text-black'}>{movie.Title}</p>
+                    {movie.imdbRating && <p className={isDark ? 'text-white' : 'text-black'}>Note IMDb : {movie.imdbRating}/10</p>}
                   </div>
                 ))}
               </div>
@@ -135,10 +137,10 @@ export default function RecommendationsPage() {
 
           {selectedCategory === "action" && (
             <div className="flex justify-center flex-col">
-              <h3 className="italic text-center m-[15px]">"I live, I die, I live again !"</h3>
+              <h3 className={`italic text-center m-[15px] ${isDark ? 'text-white' : 'text-black'}`}>"I live, I die, I live again !"</h3>
             <div className='h-screen flex justify-center'>
               <div className='w-[700px] flex flex-wrap'>
-                {isPending ? <p>Chargement...</p> : data && (data.filter(Boolean)).map((movie) => (
+                {isPending ? <p className={isDark ? 'text-white' : 'text-black'}>Chargement...</p> : data && (data.filter(Boolean)).map((movie) => (
                   <div className='w-[175px]' key={movie.imdbID}>
                     {movie.Poster && movie.Poster !== 'N/A' && (
                       <div
@@ -153,8 +155,8 @@ export default function RecommendationsPage() {
                         />
                       </div>
                     )}
-                    <p>{movie.Title}</p>
-                    {movie.imdbRating && <p>Note IMDb : {movie.imdbRating}/10</p>}
+                    <p className={isDark ? 'text-white' : 'text-black'}>{movie.Title}</p>
+                    {movie.imdbRating && <p className={isDark ? 'text-white' : 'text-black'}>Note IMDb : {movie.imdbRating}/10</p>}
                   </div>
                 ))}
               </div>
@@ -164,10 +166,10 @@ export default function RecommendationsPage() {
 
           {selectedCategory === "western" && (
             <div className="flex justify-center flex-col">
-              <h3 className="italic text-center m-[15px]">"You see, in this world there's two kinds of people, my friend: Those with loaded guns and those who dig. You dig."</h3>
+              <h3 className={`italic text-center m-[15px] ${isDark ? 'text-white' : 'text-black'}`}>"You see, in this world there's two kinds of people, my friend: Those with loaded guns and those who dig. You dig."</h3>
             <div className='h-screen flex justify-center'>
               <div className='w-[700px] flex flex-wrap'>
-                {isPending ? <p>Chargement...</p> : data && (data.filter(Boolean)).map((movie) => (
+                {isPending ? <p className={isDark ? 'text-white' : 'text-black'}>Chargement...</p> : data && (data.filter(Boolean)).map((movie) => (
                   <div className='w-[175px]' key={movie.imdbID}>
                     {movie.Poster && movie.Poster !== 'N/A' && (
                       <div
@@ -182,8 +184,8 @@ export default function RecommendationsPage() {
                         />
                       </div>
                     )}
-                    <p>{movie.Title}</p>
-                    {movie.imdbRating && <p>Note IMDb : {movie.imdbRating}/10</p>}
+                    <p className={isDark ? 'text-white' : 'text-black'}>{movie.Title}</p>
+                    {movie.imdbRating && <p className={isDark ? 'text-white' : 'text-black'}>Note IMDb : {movie.imdbRating}/10</p>}
                   </div>
                 ))}
               </div>
@@ -193,10 +195,10 @@ export default function RecommendationsPage() {
 
           {selectedCategory === "horreur" && (
             <div className="flex justify-center flex-col">
-              <h3 className="italic text-center m-[15px]">"Here come Johnny !"</h3>
+              <h3 className={`italic text-center m-[15px] ${isDark ? 'text-white' : 'text-black'}`}>"Here come Johnny !"</h3>
             <div className='h-screen flex justify-center'>
               <div className='w-[700px] flex flex-wrap'>
-                {isPending ? <p>Chargement...</p> : data && (data.filter(Boolean)).map((movie) => (
+                {isPending ? <p className={isDark ? 'text-white' : 'text-black'}>Chargement...</p> : data && (data.filter(Boolean)).map((movie) => (
                   <div className='w-[175px]' key={movie.imdbID}>
                     {movie.Poster && movie.Poster !== 'N/A' && (
                       <div
@@ -211,8 +213,8 @@ export default function RecommendationsPage() {
                         />
                       </div>
                     )}
-                    <p>{movie.Title}</p>
-                    {movie.imdbRating && <p>Note IMDb : {movie.imdbRating}/10</p>}
+                    <p className={isDark ? 'text-white' : 'text-black'}>{movie.Title}</p>
+                    {movie.imdbRating && <p className={isDark ? 'text-white' : 'text-black'}>Note IMDb : {movie.imdbRating}/10</p>}
                   </div>
                 ))}
               </div>
@@ -222,10 +224,10 @@ export default function RecommendationsPage() {
 
           {selectedCategory === "science-fiction" && (
             <div className="flex justify-center flex-col">
-              <h3 className="text-center m-[15px]">Non il n'y a pas Interstellar</h3>
+              <h3 className={`italic text-center m-[15px] ${isDark ? 'text-white' : 'text-black'}`}>If you could see your whole life from start to finish, would you change things ?</h3>
             <div className='h-screen flex justify-center'>
               <div className='w-[700px] flex flex-wrap'>
-                {isPending ? <p>Chargement...</p> : data && (data.filter(Boolean)).map((movie) => (
+                {isPending ? <p className={isDark ? 'text-white' : 'text-black'}>Chargement...</p> : data && (data.filter(Boolean)).map((movie) => (
                   <div className='w-[175px]' key={movie.imdbID}>
                     {movie.Poster && movie.Poster !== 'N/A' && (
                       <div
@@ -240,8 +242,8 @@ export default function RecommendationsPage() {
                         />
                       </div>
                     )}
-                    <p>{movie.Title}</p>
-                    {movie.imdbRating && <p>Note IMDb : {movie.imdbRating}/10</p>}
+                    <p className={isDark ? 'text-white' : 'text-black'}>{movie.Title}</p>
+                    {movie.imdbRating && <p className={isDark ? 'text-white' : 'text-black'}>Note IMDb : {movie.imdbRating}/10</p>}
                   </div>
                 ))}
               </div>
@@ -251,10 +253,10 @@ export default function RecommendationsPage() {
 
           {selectedCategory === "animation" && (
             <div className="flex justify-center flex-col">
-              <h3 className="italic text-center m-[15px]">"Everyone keeps telling me how my story is supposed to go. Nah. I'm-a do my own thing."</h3>
+              <h3 className={`italic text-center m-[15px] ${isDark ? 'text-white' : 'text-black'}`}>"Everyone keeps telling me how my story is supposed to go. Nah. I'm-a do my own thing."</h3>
             <div className='h-screen flex justify-center'>
               <div className='w-[700px] flex flex-wrap'>
-                {isPending ? <p>Chargement...</p> : data && (data.filter(Boolean)).map((movie) => (
+                {isPending ? <p className={isDark ? 'text-white' : 'text-black'}>Chargement...</p> : data && (data.filter(Boolean)).map((movie) => (
                   <div className='w-[175px]' key={movie.imdbID}>
                     {movie.Poster && movie.Poster !== 'N/A' && (
                       <div
@@ -269,8 +271,8 @@ export default function RecommendationsPage() {
                         />
                       </div>
                     )}
-                    <p>{movie.Title}</p>
-                    {movie.imdbRating && <p>Note IMDb : {movie.imdbRating}/10</p>}
+                    <p className={isDark ? 'text-white' : 'text-black'}>{movie.Title}</p>
+                    {movie.imdbRating && <p className={isDark ? 'text-white' : 'text-black'}>Note IMDb : {movie.imdbRating}/10</p>}
                   </div>
                 ))}
               </div>
@@ -280,10 +282,10 @@ export default function RecommendationsPage() {
 
           {selectedCategory === "thriller" && (
             <div className="flex justify-center flex-col">
-              <h3 className="italic text-center m-[15px]">"Laugh and the world laughs with you. Weep and you weep alone."</h3>
+              <h3 className={`italic text-center m-[15px] ${isDark ? 'text-white' : 'text-black'}`}>"Laugh and the world laughs with you. Weep and you weep alone."</h3>
             <div className='h-screen flex justify-center'>
               <div className='w-[700px] flex flex-wrap'>
-                {isPending ? <p>Chargement...</p> : data && (data.filter(Boolean)).map((movie) => (
+                {isPending ? <p className={isDark ? 'text-white' : 'text-black'}>Chargement...</p> : data && (data.filter(Boolean)).map((movie) => (
                   <div className='w-[175px]' key={movie.imdbID}>
                     {movie.Poster && movie.Poster !== 'N/A' && (
                       <div
@@ -298,8 +300,8 @@ export default function RecommendationsPage() {
                         />
                       </div>
                     )}
-                    <p>{movie.Title}</p>
-                    {movie.imdbRating && <p>Note IMDb : {movie.imdbRating}/10</p>}
+                    <p className={isDark ? 'text-white' : 'text-black'}>{movie.Title}</p>
+                    {movie.imdbRating && <p className={isDark ? 'text-white' : 'text-black'}>Note IMDb : {movie.imdbRating}/10</p>}
                   </div>
                 ))}
               </div>
@@ -309,10 +311,10 @@ export default function RecommendationsPage() {
           
           {selectedCategory === "comédie" && (
             <div className="flex justify-center flex-col">
-              <h3 className="italic text-center m-[15px]">"Shut the fuck up, Donny."</h3>
+              <h3 className={`italic text-center m-[15px] ${isDark ? 'text-white' : 'text-black'}`}>"Shut the fuck up, Donny."</h3>
             <div className='h-screen flex justify-center'>
               <div className='w-[700px] flex flex-wrap'>
-                {isPending ? <p>Chargement...</p> : data && (data.filter(Boolean)).map((movie) => (
+                {isPending ? <p className={isDark ? 'text-white' : 'text-black'}>Chargement...</p> : data && (data.filter(Boolean)).map((movie) => (
                   <div className='w-[175px]' key={movie.imdbID}>
                     {movie.Poster && movie.Poster !== 'N/A' && (
                       <div
@@ -327,8 +329,8 @@ export default function RecommendationsPage() {
                         />
                       </div>
                     )}
-                    <p>{movie.Title}</p>
-                    {movie.imdbRating && <p>Note IMDb : {movie.imdbRating}/10</p>}
+                    <p className={isDark ? 'text-white' : 'text-black'}>{movie.Title}</p>
+                    {movie.imdbRating && <p className={isDark ? 'text-white' : 'text-black'}>Note IMDb : {movie.imdbRating}/10</p>}
                   </div>
                 ))}
               </div>
@@ -338,10 +340,10 @@ export default function RecommendationsPage() {
 
           {selectedCategory === "drame" && (
             <div className="flex justify-center flex-col">
-              <h3 className="italic text-center m-[15px]">"This is the girl."</h3>
+              <h3 className={`italic text-center m-[15px] ${isDark ? 'text-white' : 'text-black'}`}>"This is the girl."</h3>
             <div className='h-screen flex justify-center'>
               <div className='w-[700px] flex flex-wrap'>
-                {isPending ? <p>Chargement...</p> : data && (data.filter(Boolean)).map((movie) => (
+                {isPending ? <p className={isDark ? 'text-white' : 'text-black'}>Chargement...</p> : data && (data.filter(Boolean)).map((movie) => (
                   <div className='w-[175px]' key={movie.imdbID}>
                     {movie.Poster && movie.Poster !== 'N/A' && (
                       <div
@@ -356,8 +358,8 @@ export default function RecommendationsPage() {
                         />
                       </div>
                     )}
-                    <p>{movie.Title}</p>
-                    {movie.imdbRating && <p>Note IMDb : {movie.imdbRating}/10</p>}
+                    <p className={isDark ? 'text-white' : 'text-black'}>{movie.Title}</p>
+                    {movie.imdbRating && <p className={isDark ? 'text-white' : 'text-black'}>Note IMDb : {movie.imdbRating}/10</p>}
                   </div>
                 ))}
               </div>
@@ -365,6 +367,9 @@ export default function RecommendationsPage() {
             </div>
           )}
 
+        </div>
+        <div className={`text-center ${isDark ? 'text-white' : 'text-black'}`}>
+          List made by : <a href="https://letterboxd.com/Zaco__/" className="text-blue-500 hover:underline">Zaco</a>
         </div>
         </>
     )
