@@ -1,4 +1,4 @@
-# CineConnect 🎬
+# Front Row 🎬
 
 Une plateforme web full-stack inspirée de **Letterboxd**, dédiée aux cinéphiles pour partager leurs expériences, critiques et discussions autour des films.
 
