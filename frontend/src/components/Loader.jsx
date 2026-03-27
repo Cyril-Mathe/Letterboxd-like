@@ -1,6 +1,6 @@
 import { Film } from 'lucide-react'
 import { useContext } from 'react'
-import { ThemeContext } from '../contexts'
+import { ThemeContext } from '../lib/fonctions/contexts'
 
 export function Loader({ message = 'Chargement...' }) {
   const { isDark } = useContext(ThemeContext)

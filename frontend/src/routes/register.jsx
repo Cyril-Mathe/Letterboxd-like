@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useContext, useState } from 'react'
-import { AuthContext, ThemeContext } from '../contexts'
+import { AuthContext, ThemeContext } from '../lib/fonctions/contexts'
 import { Link } from '@tanstack/react-router'
 import { Film, User, Mail, Lock, UserPlus } from 'lucide-react'
 import toast, { Toaster } from 'react-hot-toast';

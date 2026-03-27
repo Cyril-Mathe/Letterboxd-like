@@ -15,9 +15,7 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FriendsRouteImport } from './routes/friends'
 import { Route as FilmsRouteImport } from './routes/films'
-import { Route as DiscussionRouteImport } from './routes/discussion'
 import { Route as ChatRouteImport } from './routes/chat'
-import { Route as AboutRouteImport } from './routes/about'
 import { Route as R404RouteImport } from './routes/$404'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ResetpasswordIdRouteImport } from './routes/resetpassword/$id'
@@ -53,19 +51,9 @@ const FilmsRoute = FilmsRouteImport.update({
   path: '/films',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DiscussionRoute = DiscussionRouteImport.update({
-  id: '/discussion',
-  path: '/discussion',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ChatRoute = ChatRouteImport.update({
   id: '/chat',
   path: '/chat',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AboutRoute = AboutRouteImport.update({
-  id: '/about',
-  path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
 const R404Route = R404RouteImport.update({
@@ -92,9 +80,7 @@ const MoviesMovieIdRoute = MoviesMovieIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$404': typeof R404Route
-  '/about': typeof AboutRoute
   '/chat': typeof ChatRoute
-  '/discussion': typeof DiscussionRoute
   '/films': typeof FilmsRoute
   '/friends': typeof FriendsRoute
   '/login': typeof LoginRoute
@@ -107,9 +93,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$404': typeof R404Route
-  '/about': typeof AboutRoute
   '/chat': typeof ChatRoute
-  '/discussion': typeof DiscussionRoute
   '/films': typeof FilmsRoute
   '/friends': typeof FriendsRoute
   '/login': typeof LoginRoute
@@ -123,9 +107,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$404': typeof R404Route
-  '/about': typeof AboutRoute
   '/chat': typeof ChatRoute
-  '/discussion': typeof DiscussionRoute
   '/films': typeof FilmsRoute
   '/friends': typeof FriendsRoute
   '/login': typeof LoginRoute
@@ -140,9 +122,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/$404'
-    | '/about'
     | '/chat'
-    | '/discussion'
     | '/films'
     | '/friends'
     | '/login'
@@ -155,9 +135,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/$404'
-    | '/about'
     | '/chat'
-    | '/discussion'
     | '/films'
     | '/friends'
     | '/login'
@@ -170,9 +148,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/$404'
-    | '/about'
     | '/chat'
-    | '/discussion'
     | '/films'
     | '/friends'
     | '/login'
@@ -186,9 +162,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   R404Route: typeof R404Route
-  AboutRoute: typeof AboutRoute
   ChatRoute: typeof ChatRoute
-  DiscussionRoute: typeof DiscussionRoute
   FilmsRoute: typeof FilmsRoute
   FriendsRoute: typeof FriendsRoute
   LoginRoute: typeof LoginRoute
@@ -243,25 +217,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FilmsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/discussion': {
-      id: '/discussion'
-      path: '/discussion'
-      fullPath: '/discussion'
-      preLoaderRoute: typeof DiscussionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/chat': {
       id: '/chat'
       path: '/chat'
       fullPath: '/chat'
       preLoaderRoute: typeof ChatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/$404': {
@@ -298,9 +258,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   R404Route: R404Route,
-  AboutRoute: AboutRoute,
   ChatRoute: ChatRoute,
-  DiscussionRoute: DiscussionRoute,
   FilmsRoute: FilmsRoute,
   FriendsRoute: FriendsRoute,
   LoginRoute: LoginRoute,

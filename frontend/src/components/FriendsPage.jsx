@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from 'react'
-import { AuthContext, ThemeContext } from '../contexts'
+import { AuthContext, ThemeContext } from '../lib/fonctions/contexts'
 import { Search, UserPlus, UserMinus, Users } from 'lucide-react'
 
 const FriendsPage = () => {

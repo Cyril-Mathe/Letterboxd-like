@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useContext, useState } from 'react'
-import { AuthContext, ThemeContext } from '../contexts'
+import { AuthContext, ThemeContext } from '../lib/fonctions/contexts'
 
 export const Route = createFileRoute('/register')({
   component: Register,

@@ -1,7 +1,7 @@
 import { createRootRoute, Link, Outlet, redirect } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { useState } from 'react'
-import { ThemeContext, AuthContext } from '../contexts'
+import { ThemeContext, AuthContext } from '../lib/fonctions/contexts'
 import { Film, User, MessageCircle, Home, MessageSquare, LogOut, Sun, Moon, Sparkle, Search, X } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
@@ -116,7 +116,6 @@ const RootLayout = () => {
     { name: 'Films', href: '/films', icon: Film },
     { name: 'Recommendations', href: '/recommendations', icon: Sparkle },
     { name: 'Amis', href: '/friends', icon: User, requiresAuth: true },    { name: 'Chat', href: '/chat', icon: MessageSquare, requiresAuth: true },    { name: 'Profil', href: '/profile', icon: User, requiresAuth: true },
-    { name: 'Discussion', href: '/discussion', icon: MessageCircle, requiresAuth: true },
   ]
 
   // Theme-based classes

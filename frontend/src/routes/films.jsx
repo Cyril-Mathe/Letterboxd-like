@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useContext, useState } from 'react'
-import { ThemeContext } from '../contexts'
+import { ThemeContext } from '../lib/fonctions/contexts'
 import { useQuery } from '@tanstack/react-query'
 import { Search, Play } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
