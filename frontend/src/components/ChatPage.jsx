@@ -1,10 +1,11 @@
 import { useState, useEffect, useContext, useMemo, useRef } from 'react'
-import { AuthContext } from '../contexts'
+import { AuthContext, ThemeContext } from '../contexts'
 import { io } from 'socket.io-client'
 import { MessageSquare, Send, Users } from 'lucide-react'
 
 const ChatPage = () => {
   const { user } = useContext(AuthContext)
+  const { isDark } = useContext(ThemeContext)
   const [following, setFollowing] = useState([])
   const [followers, setFollowers] = useState([])
   const [mutualFriends, setMutualFriends] = useState([])
@@ -103,32 +104,56 @@ const ChatPage = () => {
     setNewMessage('')
   }
 
+  const getMessageMeta = (msg) => {
+    const isMine = msg.senderId === user.id
+    const senderName = isMine ? (user?.username || 'Vous') : (selectedFriend?.username || 'Utilisateur')
+
+    const createdAt = msg.createdAt ? new Date(msg.createdAt) : null
+    if (!createdAt || Number.isNaN(createdAt.getTime())) {
+      return senderName
+    }
+
+    const date = createdAt.toLocaleDateString('fr-FR')
+    const time = createdAt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+    return `${senderName} • ${date} • ${time}`
+  }
+
   const mutualList = useMemo(() => mutualFriends || [], [mutualFriends])
+  const pageBg = isDark ? 'bg-[#14181c]' : 'bg-gray-50'
+  const cardBg = isDark ? 'bg-[#1c2228]' : 'bg-white'
+  const borderColor = isDark ? 'border-[#2c3440]' : 'border-gray-200'
+  const textMain = isDark ? 'text-white' : 'text-gray-900'
+  const textSecondary = isDark ? 'text-[#9ab]' : 'text-gray-600'
+  const inputBg = isDark ? 'bg-[#14181c]' : 'bg-white'
+  const bubbleOtherBg = isDark ? 'bg-[#2c3440]' : 'bg-gray-200'
+  const bubbleOtherText = isDark ? 'text-white' : 'text-gray-800'
+  const selectedFriendBg = isDark ? 'bg-[#2c3440]' : 'bg-blue-100'
+  const hoverFriendBg = isDark ? 'hover:bg-[#2c3440]' : 'hover:bg-gray-100'
 
   if (!user) {
-    return <div className="p-6">Veuillez vous connecter pour accéder au chat.</div>
+    return <div className={`p-6 ${textMain}`}>Veuillez vous connecter pour accéder au chat.</div>
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
+    <div className={`max-w-6xl mx-auto p-6 ${pageBg} ${textMain}`}>
       <h1 className="text-3xl font-bold mb-8 flex items-center gap-2">
         <MessageSquare className="w-8 h-8" /> Chat
       </h1>
-      <div className="mb-4 text-sm text-gray-600">
+      <div className={`mb-4 text-sm ${textSecondary}`}>
         <span className="mr-4">Following: {following.length}</span>
         <span>Followers: {followers.length}</span>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-1 bg-white rounded-lg shadow p-4 border">
+        <div className={`lg:col-span-1 ${cardBg} rounded-lg shadow p-4 border ${borderColor}`}>
           <h2 className="font-semibold mb-3">Amis mutuels</h2>
           {mutualList.length === 0 ? (
-            <p className="text-gray-500">Aucun ami mutuel. Suivez quelqu’un et soyez suivi pour discuter.</p>
+            <p className={textSecondary}>Aucun ami mutuel. Suivez quelqu’un et soyez suivi pour discuter.</p>
           ) : (
             <ul className="space-y-2">
               {mutualList.map((friend) => (
                 <li key={friend.id}>
                   <button
-                    className={`w-full text-left px-3 py-2 rounded ${selectedFriend?.id === friend.id ? 'bg-blue-100' : 'hover:bg-gray-100'}`}
+                    className={`w-full text-left px-3 py-2 rounded ${selectedFriend?.id === friend.id ? selectedFriendBg : hoverFriendBg}`}
                     onClick={() => selectFriend(friend)}
                   >
                     <Users className="inline-block w-4 h-4 mr-2 align-text-bottom" />
@@ -140,17 +165,17 @@ const ChatPage = () => {
           )}
         </div>
 
-        <div className="lg:col-span-3 bg-white rounded-lg shadow p-4 border flex flex-col h-[70vh]">
+        <div className={`lg:col-span-3 ${cardBg} rounded-lg shadow p-4 border ${borderColor} flex flex-col h-[70vh]`}>
           <h2 className="font-semibold mb-3">Conversation {selectedFriend ? `avec ${selectedFriend.username}` : ''}</h2>
 
-          <div className="flex-1 overflow-y-auto p-3 border rounded-lg bg-gray-50">
-            {selectedFriend && messages.length === 0 && <p className="text-gray-500">Aucun message pour l'instant.</p>}
+          <div className={`flex-1 overflow-y-auto p-3 border rounded-lg ${borderColor} ${inputBg}`}>
+            {selectedFriend && messages.length === 0 && <p className={textSecondary}>Aucun message pour l'instant.</p>}
             {selectedFriend && messages.map((msg) => (
               <div key={msg.id} className={`mb-2 ${msg.senderId === user.id ? 'text-right' : 'text-left'}`}>
-                <span className={`inline-block px-3 py-2 rounded ${msg.senderId === user.id ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}`}>
+                <span className={`inline-block px-3 py-2 rounded ${msg.senderId === user.id ? 'bg-blue-500 text-white' : `${bubbleOtherBg} ${bubbleOtherText}`}`}>
                   {msg.content}
                 </span>
-                <div className="text-xs text-gray-500 mt-1">{new Date(msg.createdAt).toLocaleTimeString()}</div>
+                <div className={`text-xs mt-1 ${textSecondary}`}>{getMessageMeta(msg)}</div>
               </div>
             ))}
           </div>
@@ -160,7 +185,7 @@ const ChatPage = () => {
               type="text"
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              className="flex-1 px-3 py-2 border rounded-lg"
+              className={`flex-1 px-3 py-2 border rounded-lg ${borderColor} ${inputBg} ${textMain}`}
               placeholder={selectedFriend ? 'Écrire un message...' : 'Sélectionnez un ami pour commencer'}
               disabled={!selectedFriend}
               onKeyDown={(e) => { if (e.key === 'Enter') sendMessage() }}
